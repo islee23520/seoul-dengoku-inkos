@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { Language } from "../models/language.js";
 
 export interface SearchDocument {
   readonly id: string;
@@ -223,6 +224,60 @@ export function splitMarkdownForSearch(markdown: string): MarkdownSearchSegment[
   return segments;
 }
 
+const HANGUL_SYLLABLE = /\p{Script=Hangul}/u;
+const HANGUL_WORD = /^\p{Script=Hangul}+$/u;
+
+/**
+ * Trailing Korean particles and honorific suffixes, longest first so
+ * "에서" wins over "에". Stripped only from a Hangul word token, and only when the
+ * remainder is still at least two syllables. Tokenizer mechanics, not a
+ * morphological analyzer.
+ */
+const KOREAN_TRAILING_PARTICLES = [
+  "님의",
+  "에게",
+  "에서",
+  "으로",
+  "이나",
+  "나의",
+  "부터",
+  "까지",
+  "처럼",
+  "마저",
+  "조차",
+  "은",
+  "는",
+  "이",
+  "가",
+  "을",
+  "를",
+  "도",
+  "에",
+  "께",
+  "으로",
+  "로",
+  "와",
+  "과",
+  "랑",
+  "의",
+  "님",
+  "만",
+] as const;
+
+function hangulSyllableCount(token: string): number {
+  return [...token].filter((char) => HANGUL_SYLLABLE.test(char)).length;
+}
+
+function stripKoreanTrailingParticle(token: string, language: Language): string | undefined {
+  if (language !== "ko" || !HANGUL_WORD.test(token)) return undefined;
+  for (const particle of KOREAN_TRAILING_PARTICLES) {
+    if (!token.endsWith(particle) || token.length <= particle.length) continue;
+    const stem = token.slice(0, -particle.length);
+    if (hangulSyllableCount(stem) >= 2) return stem;
+  }
+  return undefined;
+}
+
 export function tokenizeSearchText(text: string): string[] {
   const normalized = text.normalize("NFKC").toLocaleLowerCase();
   const segmenter = new Intl.Segmenter(undefined, { granularity: "word" });
@@ -242,6 +297,20 @@ export function tokenizeSearchText(text: string): string[] {
     const right = tokens[index + 1] ?? "";
     if (/^\p{Script=Han}$/u.test(left) && /^\p{Script=Han}$/u.test(right)) {
       tokens.push(`${left}${right}`);
+    }
+  }
+  // ICU keeps an inflected Hangul word as one token, so a bare stem query
+  // misses the stored form. Strip one trailing particle when two syllables
+  // remain, and add adjacent Hangul-syllable bigrams the same way Han
+  // bigrams keep short compounds. Tokenizer mechanics only.
+  for (let index = 0; index < segmentedTokenCount; index += 1) {
+    const token = tokens[index] ?? "";
+    const stem = stripKoreanTrailingParticle(token, "ko");
+    if (stem) tokens.push(stem);
+    if (!HANGUL_WORD.test(token)) continue;
+    const syllables = [...token];
+    for (let syllable = 0; syllable < syllables.length - 1; syllable += 1) {
+      tokens.push(`${syllables[syllable] ?? ""}${syllables[syllable + 1] ?? ""}`);
     }
   }
   for (const match of normalized.matchAll(/[\p{L}\p{N}]+(?:[-_][\p{L}\p{N}]+)+/gu)) {
