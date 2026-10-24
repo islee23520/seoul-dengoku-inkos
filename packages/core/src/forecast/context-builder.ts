@@ -6,6 +6,7 @@ import { loadRuntimeStateSnapshot } from "../state/runtime-state-store.js";
 import { renderChapterSummariesProjection, renderCurrentStateProjection, renderHooksProjection } from "../state/state-projections.js";
 import { BookConfigSchema } from "../models/book.js";
 import { resolveDurableStoryProgress } from "../state/state-bootstrap.js";
+import type { Language } from "../models/language.js";
 
 // Read-only view of the canonical book used as forecast input. Everything in
 // here MUST stay side-effect free: building a forecast context never creates
@@ -26,7 +27,7 @@ export interface ForecastContextSections {
 export interface ForecastContext {
   readonly bookId: string;
   readonly bookTitle: string;
-  readonly language: "zh" | "en";
+  readonly language: Language;
   readonly baseChapter: number;
   readonly contextFingerprint: string;
   readonly sections: ForecastContextSections;
@@ -169,22 +170,55 @@ async function readIfExists(path: string): Promise<string | null> {
 }
 
 export function renderForecastContextMarkdown(context: ForecastContext): string {
-  const zh = context.language === "zh";
+  const language = context.language;
+  const headings = language === "zh"
+    ? {
+        authorIntent: "作者意图",
+        currentFocus: "当前聚焦",
+        currentState: "当前状态",
+        pendingHooks: "伏笔与钩子",
+        storyFrame: "故事框架",
+        volumeMap: "卷映射",
+        recentChapterSummaries: "近期章节摘要",
+        characterContext: "人物与关系",
+        title: `# 正史上下文（《${context.bookTitle}》，已完成至第 ${context.baseChapter} 章）`,
+      }
+    : language === "ko"
+      ? {
+          authorIntent: "작가 의도",
+          currentFocus: "현재 초점",
+          currentState: "현재 상태",
+          pendingHooks: "미해결 복선",
+          storyFrame: "이야기 뼈대",
+          volumeMap: "권 구성표",
+          recentChapterSummaries: "최근 장 요약",
+          characterContext: "인물과 관계",
+          title: `# 정사 컨텍스트(『${context.bookTitle}』, 제 ${context.baseChapter}장까지 집필 완료)`,
+        }
+      : {
+          authorIntent: "Author intent",
+          currentFocus: "Current focus",
+          currentState: "Current state",
+          pendingHooks: "Pending hooks",
+          storyFrame: "Story frame",
+          volumeMap: "Volume map",
+          recentChapterSummaries: "Recent chapter summaries",
+          characterContext: "Characters and relationships",
+          title: `# Canonical context ("${context.bookTitle}", written through chapter ${context.baseChapter})`,
+        };
   const sectionList: ReadonlyArray<readonly [string, string]> = [
-    [zh ? "作者意图" : "Author intent", context.sections.authorIntent],
-    [zh ? "当前聚焦" : "Current focus", context.sections.currentFocus],
-    [zh ? "当前状态" : "Current state", context.sections.currentState],
-    [zh ? "伏笔与钩子" : "Pending hooks", context.sections.pendingHooks],
-    [zh ? "故事框架" : "Story frame", context.sections.storyFrame],
-    [zh ? "卷映射" : "Volume map", context.sections.volumeMap],
-    [zh ? "近期章节摘要" : "Recent chapter summaries", context.sections.recentChapterSummaries],
-    [zh ? "人物与关系" : "Characters and relationships", context.sections.characterContext],
+    [headings.authorIntent, context.sections.authorIntent],
+    [headings.currentFocus, context.sections.currentFocus],
+    [headings.currentState, context.sections.currentState],
+    [headings.pendingHooks, context.sections.pendingHooks],
+    [headings.storyFrame, context.sections.storyFrame],
+    [headings.volumeMap, context.sections.volumeMap],
+    [headings.recentChapterSummaries, context.sections.recentChapterSummaries],
+    [headings.characterContext, context.sections.characterContext],
   ];
 
   const blocks = [
-    zh
-      ? `# 正史上下文（《${context.bookTitle}》，已完成至第 ${context.baseChapter} 章）`
-      : `# Canonical context ("${context.bookTitle}", written through chapter ${context.baseChapter})`,
+    headings.title,
     ...sectionList
       .filter(([, content]) => content.trim())
       .map(([heading, content]) => `## ${heading}\n\n${content.trim()}`),
@@ -192,7 +226,7 @@ export function renderForecastContextMarkdown(context: ForecastContext): string 
   return blocks.join("\n\n");
 }
 
-async function readBookConfig(bookDir: string): Promise<{ readonly title: string; readonly language: "zh" | "en" }> {
+async function readBookConfig(bookDir: string): Promise<{ readonly title: string; readonly language: Language }> {
   const raw = await readFile(join(bookDir, "book.json"), "utf-8");
   const parsed = BookConfigSchema.parse(JSON.parse(raw));
   return { title: parsed.title, language: parsed.language ?? "zh" };

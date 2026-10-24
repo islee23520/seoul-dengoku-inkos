@@ -1,7 +1,8 @@
+import type { Language } from "../models/language.js";
 // Bilingual prompt builders for the narrative forecast agent, organized the
 // same way as prompts/short-fiction.ts: each builder switches on language.
 
-export type ForecastLanguage = "zh" | "en";
+export type ForecastLanguage = Language;
 
 export interface ForecastPromptInput {
   readonly contextMarkdown: string;
@@ -12,6 +13,9 @@ export interface ForecastPromptInput {
 }
 
 export function buildForecastSystemPrompt(language: ForecastLanguage): string {
+  if (language === "ko") {
+    return "활성화된 장편 집필 Skill로 서로 격리된 비정사 후보 미래를 전개합니다. 정사는 유지하고, 충돌은 위험 요소로 명시합니다.";
+  }
   return language === "en"
     ? "Project mutually isolated, non-canonical futures with the activated long-writing Skill. Preserve canon and surface conflicts as risks."
     : "按已激活的长篇写作 Skill 推演相互隔离的非正史候选未来。保留正典，把冲突明确列为风险。";
@@ -33,10 +37,21 @@ export function buildForecastUserPrompt(input: ForecastPromptInput, language: Fo
       "Submit complete branches through the forecast result tool.",
     ].join("\n");
   }
+  if (language === "ko") {
+    return [
+      input.contextMarkdown,
+      "",
+      "## 분기점",
+      "",
+      input.divergence,
+      "",
+      "## 출력 요구",
+      "",
+      `정확히 ${input.branchCount}개의 후보 분기를 만듭니다. 각 분기는 ${firstChapter}장부터 시작해 약 ${input.horizon}장의 미래 전개를 다룹니다.`,
+      "서사 전개 결과 도구를 통해 완전한 분기를 제출합니다.",
+    ].join("\n");
+  }
   return [
-    input.contextMarkdown,
-    "",
-    "## 分歧点",
     "",
     input.divergence,
     "",
@@ -48,6 +63,12 @@ export function buildForecastUserPrompt(input: ForecastPromptInput, language: Fo
 }
 
 export function buildForecastRepairPrompt(validationError: string, language: ForecastLanguage): string {
+  if (language === "ko") {
+    return [
+      `이전 출력이 검증을 통과하지 못했습니다: ${validationError}`,
+      "문제를 수정한 뒤 결과 도구를 통해 완전한 분기 전체를 다시 제출합니다.",
+    ].join("\n");
+  }
   if (language === "en") {
     return [
       `Your previous output failed validation: ${validationError}`,
