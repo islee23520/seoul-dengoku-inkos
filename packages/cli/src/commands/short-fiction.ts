@@ -16,6 +16,7 @@ import {
   type ShortFictionReference,
   type ShortFictionLanguage,
 } from "@actalk/inkos-core";
+import { LanguageSchema } from "@actalk/inkos-core";
 import { buildPipelineConfig, findProjectRoot, loadConfig, log, logError, resolveCliProfileSkills } from "../utils.js";
 
 export { extractResponsesImageBase64, resolveCoverApiKey } from "@actalk/inkos-core";
@@ -187,8 +188,11 @@ interface ShortRunOptions {
 }
 
 function parseShortFictionLanguage(value: string): ShortFictionLanguage {
-  if (value === "zh" || value === "en") return value;
-  throw new Error("lang must be zh or en.");
+  const parsed = LanguageSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error(`lang must be one of: ${LanguageSchema.options.join(", ")}.`);
+  }
+  return parsed.data;
 }
 
 interface ShortRunModels {

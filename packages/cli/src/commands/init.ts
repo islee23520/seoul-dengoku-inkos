@@ -3,18 +3,27 @@ import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { log, logError } from "../utils.js";
 import { initializeProjectDirectory } from "../project-bootstrap.js";
+import { LanguageSchema } from "@actalk/inkos-core";
 
 export const initCommand = new Command("init")
   .description("Initialize an InkOS project (current directory by default)")
   .argument("[name]", "Project name (creates subdirectory). Omit to init current directory.")
-  .option("--lang <language>", "Default writing language: zh (Chinese) or en (English)", "zh")
+  .option("--lang <language>", "Default writing language (zh, en, ko)", "zh")
   .action(async (name: string | undefined, opts: { lang?: string }) => {
     const projectDir = name ? resolve(process.cwd(), name) : process.cwd();
 
     try {
       await mkdir(projectDir, { recursive: true });
+
+      const rawLang = opts.lang ?? "zh";
+      const parsed = LanguageSchema.safeParse(rawLang);
+      if (!parsed.success) {
+        throw new Error(`Invalid --lang value: ${rawLang}. Must be one of: ${LanguageSchema.options.join(", ")}`);
+      }
+      const language = parsed.data;
+
       await initializeProjectDirectory(projectDir, {
-        language: (opts.lang === "en" ? "en" : "zh"),
+        language,
         overwriteSupportFiles: true,
       });
 
