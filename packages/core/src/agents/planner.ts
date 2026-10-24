@@ -18,6 +18,7 @@ import {
   getPlannerMemoSystemPrompt,
 } from "./planner-prompts.js";
 import { ComposerAgent } from "./composer.js";
+import type { Language } from "../models/language.js";
 
 export interface PlanChapterInput {
   readonly book: BookConfig;
@@ -121,7 +122,7 @@ export class PlannerAgent extends BaseAgent {
     readonly chapterNumber: number;
     readonly contextPackage: ContextPackage;
     readonly currentInstruction?: string;
-    readonly language?: "zh" | "en";
+    readonly language?: Language;
     readonly lengthSpec: LengthSpec;
   }): Promise<ChapterMemo> {
     const language = input.language ?? "zh";

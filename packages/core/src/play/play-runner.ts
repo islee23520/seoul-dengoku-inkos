@@ -24,6 +24,7 @@ import { compileContext, ContextSourceRegistry, type ContextFragment } from "../
 import { createBuiltInWorkProfileRegistry } from "../harness/builtin-profiles.js";
 import { semanticInputBudget } from "../llm/semantic-input.js";
 import { SemanticContextCompilerAgent } from "../agents/semantic-context-compiler.js";
+import type { Language } from "../models/language.js";
 
 export interface PlayOpeningStateLike {
   readonly extract: (input: {
@@ -31,7 +32,7 @@ export interface PlayOpeningStateLike {
     readonly sceneText: string;
     readonly suggestedActions: readonly string[];
     readonly context: string;
-    readonly language?: "zh" | "en";
+    readonly language?: Language;
     readonly worldPremise?: string;
   }) => Promise<PlayMutationInput>;
 }
@@ -46,7 +47,7 @@ export interface PlayTurnLike {
     readonly context: string;
     readonly replayContext?: string;
     readonly mode: "open" | "guided";
-    readonly language?: "zh" | "en";
+    readonly language?: Language;
     readonly worldPremise?: string;
     readonly currentSuggestedActions?: readonly string[];
   }) => Promise<PlayTurnResult>;
@@ -441,7 +442,7 @@ export class PlayRunner {
 
   private async buildContextBrief(
     sceneBrief: string,
-    language: "zh" | "en",
+    language: Language,
     world: PlayWorld,
     intent: string,
   ): Promise<string> {
@@ -525,7 +526,7 @@ function isOpeningGraphReady(graph: PlayGraphSnapshot | null): boolean {
 function buildReplayContext(input: {
   readonly originalInput: string;
   readonly replacementInput?: string;
-  readonly language: "zh" | "en";
+  readonly language: Language;
 }): string {
   const replacement = input.replacementInput?.trim();
   if (input.language === "en") {
@@ -550,7 +551,7 @@ function buildReplayContext(input: {
   ].filter(Boolean).join("\n");
 }
 
-function renderPlayWorldContext(world: PlayWorld | null | undefined, language: "zh" | "en"): string {
+function renderPlayWorldContext(world: PlayWorld | null | undefined, language: Language): string {
   if (!world) return "";
   const premise = world.premise?.trim();
   const worldContract = world.worldContract?.trim();
@@ -591,7 +592,7 @@ function requireRestorableGraphDB(db: PlayReducerDB): PlayReducerDB & {
   };
 }
 
-function renderEntity(entity: PlayEntity, language: "zh" | "en"): string {
+function renderEntity(entity: PlayEntity, language: Language): string {
   const isEn = language === "en";
   const detail = [entity.summary, entity.status ? `${isEn ? "status" : "状态"}: ${entity.status}` : ""]
     .filter(Boolean)

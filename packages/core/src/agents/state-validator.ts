@@ -1,6 +1,7 @@
 import { BaseAgent } from "./base.js";
 import { StateValidationToolSchema } from "./state-validation-tool.js";
 import type { Observation } from "../models/observation.js";
+import type { Language } from "../models/language.js";
 
 export interface ValidationResult {
   readonly observations: ReadonlyArray<Observation>;
@@ -32,7 +33,7 @@ export class StateValidatorAgent extends BaseAgent {
     newState: string,
     oldHooks: string,
     newHooks: string,
-    language: "zh" | "en" = "zh",
+    language: Language = "zh",
     authorityContext?: StateValidationAuthorityContext,
   ): Promise<ValidationResult> {
     if (oldState === newState && oldHooks === newHooks) {

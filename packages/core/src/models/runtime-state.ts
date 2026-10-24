@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { LanguageSchema, type Language } from "./language.js";
 
-export const RuntimeStateLanguageSchema = z.enum(["zh", "en"]);
-export type RuntimeStateLanguage = z.infer<typeof RuntimeStateLanguageSchema>;
+export const RuntimeStateLanguageSchema = LanguageSchema;
+export type RuntimeStateLanguage = Language;
 
 export const StateManifestSchema = z.object({
   schemaVersion: z.literal(2),

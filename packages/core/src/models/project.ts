@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LLM_API_FORMATS } from "../llm/api-format.js";
+import { LanguageSchema } from "./language.js";
 
 export const LLMServiceEntrySchema = z.object({
   service: z.string().min(1),
@@ -103,7 +104,7 @@ export type ResearchSearchConfig = z.infer<typeof ResearchSearchConfigSchema>;
 export const ProjectConfigSchema = z.object({
   name: z.string().min(1),
   version: z.literal("0.1.0"),
-  language: z.enum(["zh", "en"]).default("zh"),
+  language: LanguageSchema.default("zh"),
   llm: LLMConfigSchema,
   notify: z.array(NotifyChannelSchema).default([]),
   detection: DetectionConfigSchema.optional(),

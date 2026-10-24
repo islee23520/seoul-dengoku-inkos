@@ -61,6 +61,7 @@ import { loadAvailableAgentSkills, mergeActivatedSkillGuidance } from "../skills
 import { commitAtomicFileSet } from "../utils/atomic-file-set.js";
 import { compileStyleGuide } from "../agents/style-guide.js";
 import { compileImportSource, renderCompleteImportSource } from "../agents/import-context.js";
+import type { Language } from "../models/language.js";
 
 function mergeChapterRevisionInstructions(
   persistedBrief: string,
@@ -83,7 +84,7 @@ function mergeChapterRevisionInstructions(
 export function buildSpinoffFoundationContext(
   parentCanon: string,
   direction: string | undefined,
-  language: "zh" | "en",
+  language: Language,
 ): string {
   const dir = direction?.trim();
   if (language === "en") {
@@ -267,10 +268,6 @@ export class PipelineRunner {
   private async resolveBookLanguageById(bookId: string): Promise<LengthLanguage> {
     const book = await this.state.loadBookConfig(bookId);
     return this.resolveBookLanguage(book);
-  }
-
-  private languageFromLengthSpec(lengthSpec: Pick<LengthSpec, "countingMode">): LengthLanguage {
-    return lengthSpec.countingMode === "en_words" ? "en" : "zh";
   }
 
   private logStage(language: LengthLanguage, message: { zh: string; en: string }): void {
@@ -1339,7 +1336,7 @@ export class PipelineRunner {
     let totalUsage: TokenUsageSummary = output.tokenUsage ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
     this.logStage(stageLanguage, { zh: "生成章节审查观察", en: "collecting chapter review observations" });
     const reviewResult = await reviewChapterDraft({
-      book: { genre: book.genre },
+      book: { genre: book.genre, language: book.language },
       bookDir,
       chapterNumber,
       output,

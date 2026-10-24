@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PlayModeSchema, SessionKindSchema, type PlayMode, type SessionKind } from "./session.js";
+import { LanguageSchema } from "../models/language.js";
 export type { SessionKind };
 export type { PlayMode };
 
@@ -79,7 +80,7 @@ export const MessageEventSchema = BaseEventSchema.extend({
     }).strict().optional(),
     userInput: z.object({
       text: z.string(),
-      language: z.enum(["zh", "en"]),
+      language: LanguageSchema,
       attachments: z.array(z.object({ filename: z.string() }).strict()),
     }).strict().optional(),
     thinking: z.string().optional(),

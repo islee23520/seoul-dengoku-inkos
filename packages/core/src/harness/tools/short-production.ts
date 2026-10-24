@@ -7,6 +7,7 @@ import { readShortProductionState } from "../../pipeline/short-production-state.
 import { loadAvailableAgentSkills } from "../../skills/builtin-loader.js";
 import { resolveProfileSkillActivations } from "../../skills/activations.js";
 import { createBuiltInWorkProfileRegistry } from "../builtin-profiles.js";
+import { asLanguage } from "../../models/language.js";
 
 const Parameters = Type.Object({
   workId: Type.String({ minLength: 1 }),
@@ -29,9 +30,9 @@ export function createShortProductionStageTools(pipeline: PipelineRunner, root: 
     async execute(_id, params, signal, onUpdate) {
       if (activeWorkId && activeWorkId !== params.workId) throw new Error("Action must target the active Work");
       let profileId = "short-fiction";
-      let language: "zh" | "en" = "zh";
+      let language = asLanguage("zh");
       let title:string|undefined;
-      try { const work = await loadWorkManifest(root, params.workId); profileId = work.profileId;title=work.title; language = work.language === "en" ? "en" : "zh"; } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+      try { const work = await loadWorkManifest(root, params.workId); profileId = work.profileId;title=work.title; language = asLanguage(work.language); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
       const profile = createBuiltInWorkProfileRegistry(root).require(profileId);
       if (!profile.capabilityIds.includes("short-fiction")) throw new Error("This Work does not declare short-fiction capability");
       const skills = resolveProfileSkillActivations((await loadAvailableAgentSkills({ projectRoot: root })).skills, profile);

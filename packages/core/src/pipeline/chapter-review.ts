@@ -2,6 +2,7 @@ import type { AuditResult } from "../agents/continuity.js";
 import type { WriteChapterOutput } from "../agents/writer.js";
 import type { ContextPackage } from "../models/input-governance.js";
 import type { LengthSpec } from "../models/length-governance.js";
+import type { Language } from "../models/language.js";
 import { countChapterLength } from "../utils/length-metrics.js";
 
 export interface ChapterReviewUsage {
@@ -22,7 +23,7 @@ export interface ChapterReviewResult {
 }
 
 export async function reviewChapterDraft(params: {
-  readonly book: Pick<{ genre: string }, "genre">;
+  readonly book: Pick<{ genre: string; language: Language }, "genre" | "language">;
   readonly bookDir: string;
   readonly chapterNumber: number;
   readonly output: Pick<WriteChapterOutput, "content">;
@@ -36,7 +37,7 @@ export async function reviewChapterDraft(params: {
       chapterNumber: number,
       genre: string | undefined,
       options: {
-        readonly language: "zh" | "en";
+        readonly language: Language;
         readonly contextPackage: ContextPackage;
         readonly temperature?: number;
       },
@@ -56,7 +57,7 @@ export async function reviewChapterDraft(params: {
       params.chapterNumber,
       params.book.genre,
       {
-        language: params.lengthSpec.countingMode === "en_words" ? "en" : "zh",
+        language: params.book.language,
         contextPackage: params.controlInput.contextPackage,
         temperature: 0.3,
       },

@@ -2,6 +2,7 @@ import { BaseAgent } from "./base.js";
 import { completeLongForm } from "../llm/long-form-completion.js";
 import { materializeStoryGraph } from "../interactive-film/generate.js";
 import { InteractiveFilmPackageToolSchema, StoryboardPackageToolSchema } from "./production-document-tool.js";
+import type { Language } from "../models/language.js";
 
 export type ScriptTargetFormat = string;
 
@@ -14,7 +15,7 @@ export interface ScriptCreationInput {
   readonly requirements?: string;
   readonly episodeCount?: number;
   readonly episodeDuration?: string;
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
 }
 
 export interface StoryboardCreationInput {
@@ -27,7 +28,7 @@ export interface StoryboardCreationInput {
   readonly aspectRatio?: string;
   readonly granularity?: string;
   readonly maxShots?: number;
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
 }
 
 export interface InteractiveFilmCreationInput {
@@ -41,7 +42,7 @@ export interface InteractiveFilmCreationInput {
   readonly episodeDuration?: string;
   readonly budget?: string;
   readonly referenceMode?: string;
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
 }
 
 export class ScriptCreationAgent extends BaseAgent {
@@ -51,7 +52,7 @@ export class ScriptCreationAgent extends BaseAgent {
 
   private async recoverProductionMarkdown(
     fragments: string,
-    language: "zh" | "en",
+    language: Language,
     requiredHeadings: readonly string[],
   ): Promise<string> {
     const response = await this.chat([
@@ -168,7 +169,7 @@ export class InteractiveFilmCreationAgent extends BaseAgent {
   }
 }
 
-function productionBrief(input: {authorRequest?: string; requirements?: string}, language: "zh" | "en") {
+function productionBrief(input: {authorRequest?: string; requirements?: string}, language: Language) {
   const en = language === "en";
   return [
     ...(input.authorRequest?.trim() ? [en ? "## Author request" : "## 作者原始请求", input.authorRequest, ""] : []),
@@ -305,7 +306,7 @@ export function renderInteractiveFilmSpec(input: InteractiveFilmCreationInput): 
 }
 
 
-function buildScriptCreationSystemPrompt(language: "zh" | "en" = "zh"): string {
+function buildScriptCreationSystemPrompt(language: Language = "zh"): string {
   if (language === "en") {
     return [
       "Produce the confirmed script artifact with the activated script-writing Skill.",
@@ -320,7 +321,7 @@ function buildScriptCreationSystemPrompt(language: "zh" | "en" = "zh"): string {
   ].join("\n");
 }
 
-function buildScriptCreationUserPrompt(input: ScriptCreationInput, language: "zh" | "en" = "zh"): string {
+function buildScriptCreationUserPrompt(input: ScriptCreationInput, language: Language = "zh"): string {
   if (language === "en") {
     return [
       "## Creation Spec",
@@ -358,7 +359,7 @@ function buildScriptCreationUserPrompt(input: ScriptCreationInput, language: "zh
   ].join("\n");
 }
 
-function buildStoryboardCreationSystemPrompt(language: "zh" | "en" = "zh"): string {
+function buildStoryboardCreationSystemPrompt(language: Language = "zh"): string {
   if (language === "en") {
     return [
       "Execute the confirmed visual spec with the activated storyboard Skill; unconfirmed choices remain adjustable.",
@@ -371,7 +372,7 @@ function buildStoryboardCreationSystemPrompt(language: "zh" | "en" = "zh"): stri
   ].join("\n");
 }
 
-function buildStoryboardCreationUserPrompt(input: StoryboardCreationInput, language: "zh" | "en" = "zh"): string {
+function buildStoryboardCreationUserPrompt(input: StoryboardCreationInput, language: Language = "zh"): string {
   const maxShotsRule = input.maxShots
     ? (language === "en" ? `Do not exceed ${input.maxShots} shots.` : `镜头总数不得超过 ${input.maxShots}。`)
     : "";
@@ -412,7 +413,7 @@ function buildStoryboardCreationUserPrompt(input: StoryboardCreationInput, langu
   ].join("\n");
 }
 
-function buildInteractiveFilmCreationSystemPrompt(language: "zh" | "en" = "zh"): string {
+function buildInteractiveFilmCreationSystemPrompt(language: Language = "zh"): string {
   if (language === "en") {
     return [
       "Execute the confirmed spec with the activated interactive-film Skill; unconfirmed choices remain adjustable.",
@@ -427,7 +428,7 @@ function buildInteractiveFilmCreationSystemPrompt(language: "zh" | "en" = "zh"):
   ].join("\n");
 }
 
-function buildInteractiveFilmCreationUserPrompt(input: InteractiveFilmCreationInput, language: "zh" | "en" = "zh"): string {
+function buildInteractiveFilmCreationUserPrompt(input: InteractiveFilmCreationInput, language: Language = "zh"): string {
   if (language === "en") {
     return [
       "## Interactive Film Spec",
@@ -489,7 +490,7 @@ function buildInteractiveFilmCreationUserPrompt(input: InteractiveFilmCreationIn
   ].join("\n");
 }
 
-function formatScriptTarget(value: ScriptTargetFormat | undefined, language: "zh" | "en" = "zh"): string {
+function formatScriptTarget(value: ScriptTargetFormat | undefined, language: Language = "zh"): string {
   const custom = value?.trim();
   if (custom && !["vertical_short_drama", "screenplay", "audio_drama", "interactive_script", "general_script"].includes(custom)) {
     return custom;
@@ -524,7 +525,7 @@ function formatScriptTarget(value: ScriptTargetFormat | undefined, language: "zh
   }
 }
 
-function summarizeSourceForSpec(sourceText: string | undefined, language: "zh" | "en" = "zh"): string {
+function summarizeSourceForSpec(sourceText: string | undefined, language: Language = "zh"): string {
   const text = sourceText?.replace(/\s+/g, " ").trim();
   if (language === "en") {
     if (!text) return "No full source material provided.";

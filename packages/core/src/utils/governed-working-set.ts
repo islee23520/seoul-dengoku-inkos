@@ -1,11 +1,12 @@
 import type { ContextPackage } from "../models/input-governance.js";
 import type { HookRecord } from "../models/runtime-state.js";
 import { renderHooksProjection } from "../state/state-projections.js";
+import type { Language } from "../models/language.js";
 
 export function buildGovernedHookWorkingSet(params: {
   readonly hooks: ReadonlyArray<HookRecord>;
   readonly contextPackage: ContextPackage;
-  readonly language: "zh" | "en";
+  readonly language: Language;
 }): string {
   if (params.hooks.length === 0) return renderHooksProjection({ hooks: [] }, params.language);
 

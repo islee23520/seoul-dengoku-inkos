@@ -3,10 +3,11 @@ import type {
   CurrentStateState,
   HooksState,
 } from "../models/runtime-state.js";
+import type { Language } from "../models/language.js";
 
 export function renderHooksProjection(
   state: HooksState,
-  language: "zh" | "en" = "zh",
+  language: Language = "zh",
   options?: { readonly currentChapter?: number },
 ): string {
   void options;
@@ -44,7 +45,7 @@ export function renderHooksProjection(
 
 export function renderChapterSummariesProjection(
   state: ChapterSummariesState,
-  language: "zh" | "en" = "zh",
+  language: Language = "zh",
 ): string {
   const title = language === "en" ? "# Chapter Summaries" : "# 章节摘要";
   const headers = language === "en"
@@ -77,7 +78,7 @@ export function renderChapterSummariesProjection(
 
 export function renderCurrentStateProjection(
   state: CurrentStateState,
-  language: "zh" | "en" = "zh",
+  language: Language = "zh",
 ): string {
   const title = language === "en" ? "# Current State" : "# 当前状态";
   const chapterLabel = language === "en" ? "Current chapter" : "当前章节";

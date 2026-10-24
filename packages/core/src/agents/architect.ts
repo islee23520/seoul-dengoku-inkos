@@ -8,6 +8,7 @@ import { FoundationDetailsToolSchema, FoundationOutlineToolSchema, FoundationCas
 import type { HookRecord } from "../models/runtime-state.js";
 import { createInitialRuntimeState } from "../state/runtime-state-store.js";
 import { commitAtomicFileSet, type AtomicFileWrite } from "../utils/atomic-file-set.js";
+import type { Language } from "../models/language.js";
 
 // Architect owns the five-section persistence protocol. Foundation craft is
 // supplied by the active long-writing and derivative-work Skills.
@@ -129,7 +130,7 @@ ${reviseFrom.userFeedback || "（无）"}
     readonly book: BookConfig;
     readonly contextBlock: string;
     readonly reviewFeedbackBlock: string;
-    readonly language: "zh" | "en";
+    readonly language: Language;
   }): string {
     const { book, contextBlock, reviewFeedbackBlock, language } = params;
     const metadata = language === "en"
@@ -142,7 +143,7 @@ ${reviseFrom.userFeedback || "（无）"}
   async writeFoundationFiles(
     bookDir: string,
     output: ArchitectOutput,
-    language: "zh" | "en",
+    language: Language,
     mode: "init" | "revise" = "init",
   ): Promise<void> {
     const writes: AtomicFileWrite[] = [
@@ -262,7 +263,7 @@ ${reviseFrom.userFeedback || "（无）"}
   private async generateFoundationInStages(input: {
     readonly systemPrompt: string;
     readonly userMessage: string;
-    readonly language: "zh" | "en";
+    readonly language: Language;
     readonly temperature: number;
     readonly onOutline?: (outline: { readonly storyFrame: string; readonly volumeMap: string }) => void | Promise<void>;
   }): Promise<ArchitectOutput> {
@@ -344,7 +345,7 @@ ${reviseFrom.userFeedback || "（无）"}
   }
   private buildReviewFeedbackBlock(
     reviewFeedback: string | undefined,
-    language: "zh" | "en",
+    language: Language,
   ): string {
     const trimmed = reviewFeedback?.trim();
     if (!trimmed) return "";

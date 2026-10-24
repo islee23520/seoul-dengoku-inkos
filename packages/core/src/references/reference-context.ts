@@ -2,13 +2,14 @@ import { readFile } from "node:fs/promises";
 import type { ContextPackage } from "../models/input-governance.js";
 import { safeChildPath } from "../utils/path-safety.js";
 import { listBookReferences } from "./book-references.js";
+import type { Language } from "../models/language.js";
 
 export interface BookReferenceSelectionTask {
   readonly chapterNumber: number;
   readonly goal: string;
   readonly outlineNode: string;
   readonly mustKeep: ReadonlyArray<string>;
-  readonly language: "zh" | "en";
+  readonly language: Language;
 }
 
 export interface ReferenceSectionCandidate {

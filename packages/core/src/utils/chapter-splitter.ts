@@ -1,3 +1,4 @@
+import type { Language } from "../models/language.js";
 export interface SplitChapter {
   readonly title: string;
   readonly content: string;
@@ -6,7 +7,7 @@ export interface SplitChapter {
 const NUMBERED_HEADING = /^#{0,6}\s*(?:第([零〇○Ｏ０一二三四五六七八九十百千万\d]+)(章|回)(?:[:：]|\s+)?\s*(.*)|Chapter\s+(\d+|[IVXLCDM]+)[.:]?\s*(.*))$/i;
 
 /** Numbered document syntax shared by persistence, export and import. */
-export function readChapterHeading(line: string): {number:number;title:string;language:'zh'|'en'} | undefined {
+export function readChapterHeading(line: string): {number:number;title:string;language:Language} | undefined {
   const match=NUMBERED_HEADING.exec(line.trim());
   if(!match)return undefined;
   const ordinal=match[1]??match[4]!;

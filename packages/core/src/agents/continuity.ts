@@ -7,6 +7,7 @@ import {readArtifactRevision} from '../harness/artifact-reader.js';
 import {currentExecutionBaselineWork} from '../harness/execution-evidence.js';
 import {chapterDocumentBody} from '../utils/chapter-document.js';
 import {changedSourceRegion} from '../utils/source-text.js';
+import type { Language } from "../models/language.js";
 
 export interface AuditResult {
   readonly observations: ReadonlyArray<Observation>;
@@ -31,7 +32,7 @@ export class ContinuityAuditor extends BaseAgent {
     chapterNumber: number,
     _genre: string | undefined,
     options: {
-      readonly language: "zh" | "en";
+      readonly language: Language;
       readonly contextPackage: ContextPackage;
       readonly temperature?: number;
     },

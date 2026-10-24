@@ -9,6 +9,7 @@ import {textRangeEditContract,textSelectionEditContract,TextEditRangeSchema} fro
 import { ChapterRewriteToolSchema } from "./reviser-tool.js";
 import {chapterDocumentBody} from '../utils/chapter-document.js';
 import { renderNarrativeSelectedContext } from "../utils/narrative-control.js";
+import type { Language } from "../models/language.js";
 
 export type ReviseMode = "polish" | "rewrite" | "rework" | "anti-detect" | "spot-fix";
 
@@ -37,7 +38,7 @@ export class ReviserAgent extends BaseAgent {
     mode: ReviseMode = DEFAULT_REVISE_MODE,
     _genre?: string,
     options?: {
-      readonly language: "zh" | "en";
+      readonly language: Language;
       readonly chapterTitle?:string;
       readonly targetText?:string;
       readonly contextPackage: ContextPackage;
@@ -164,7 +165,7 @@ export class ReviserAgent extends BaseAgent {
   }
 }
 
-function buildRevisionProtocol(mode: ReviseMode, language: "zh" | "en"): string {
+function buildRevisionProtocol(mode: ReviseMode, language: Language): string {
   const modes: Record<ReviseMode, { readonly en: string; readonly zh: string }> = {
     polish: { en: "Edit wording only; keep facts, events, characters, and causality.", zh: "只改文字表面，保持事实、事件、人物和因果。" },
     rewrite: { en: "Rewrite the affected passages; rewrite the whole chapter only when the instruction spans it.", zh: "重写受影响段落；只有要求跨越整章时才重写整章。" },
