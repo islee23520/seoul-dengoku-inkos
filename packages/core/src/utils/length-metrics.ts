@@ -1,15 +1,20 @@
 import type { LengthCountingMode, LengthSpec } from "../models/length-governance.js";
+import type { Language } from "../models/language.js";
 
-export type LengthLanguage = "zh" | "en";
+export type LengthLanguage = Language;
 
 // Per-chapter length default in the book's native unit: Chinese counts characters (3000字),
-// English counts words (~2000 ≈ a 3000-char chapter). One cross-language number would mis-scale —
-// 3000 read as English words runs ~50% long, and the hard-range guard then force-expands correct chapters.
+// Korean counts space-stripped characters (4000자), English counts words (~2000 ≈ a 3000-char chapter).
+// One cross-language number would mis-scale — 3000 read as English words runs ~50% long, and the
+// hard-range guard then force-expands correct chapters.
 export const DEFAULT_CHAPTER_LENGTH_ZH = 3000;
 export const DEFAULT_CHAPTER_LENGTH_EN = 2000;
+export const DEFAULT_CHAPTER_LENGTH_KO = 4000;
 
 export function defaultChapterLength(language: LengthLanguage = "zh"): number {
-  return language === "en" ? DEFAULT_CHAPTER_LENGTH_EN : DEFAULT_CHAPTER_LENGTH_ZH;
+  if (language === "en") return DEFAULT_CHAPTER_LENGTH_EN;
+  if (language === "ko") return DEFAULT_CHAPTER_LENGTH_KO;
+  return DEFAULT_CHAPTER_LENGTH_ZH;
 }
 
 export function countChapterLength(
@@ -29,14 +34,18 @@ export function countChapterLength(
 export function resolveLengthCountingMode(
   language: LengthLanguage = "zh",
 ): LengthCountingMode {
+  // Korean counts space-stripped characters, the same mode as Chinese. No separate mode.
   return language === "en" ? "en_words" : "zh_chars";
 }
 
 export function formatLengthCount(
   count: number,
   countingMode: LengthCountingMode,
+  language?: LengthLanguage,
 ): string {
-  return countingMode === "en_words" ? `${count} words` : `${count}字`;
+  if (countingMode === "en_words") return `${count} words`;
+  if (language === "ko") return `${count}자`;
+  return `${count}字`;
 }
 
 export function buildLengthSpec(
