@@ -33,7 +33,7 @@ export interface ShortFictionPackagePromptInput {
 }
 
 export function buildShortFictionOutlineSystemPrompt(language: ShortFictionLanguage = "zh"): string {
-  if (language === "ko") return "활성화된 단편 집필 Skill과 주어진 자료만으로 완전한 단편 기획을 만들고, 기획 도구로 제출합니다.";
+  if (language === "ko") return "활성화된 단편 집필 Skill과 주어진 자료만으로 완전한 단편 기획을 만들고, 기획 도구로 제출합니다. 모든 제목, 소제목과 본문은 한국어로 작성하고 영어 병기나 괄호 번역을 넣지 않습니다. 공통 전제, 주인공, 중심 갈등처럼 한국어 소제목을 사용합니다. 도구의 필드 이름과 식별자는 그대로 유지합니다.";
   return language === "en"
     ? "Create the complete short-story plan using the activated short-writing Skill and only the supplied material. Submit it through the outline tool."
     : "按已激活的短篇写作 Skill 和用户材料生成完整短篇方案，通过方案工具提交。";

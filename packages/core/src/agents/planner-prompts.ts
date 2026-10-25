@@ -4,7 +4,7 @@ import type { Language } from "../models/language.js";
 
 export function getPlannerMemoSystemPrompt(language: Language = "zh"): string {
   if (language === "ko") {
-    return "입력된 governed context를 한 장의 memo로 정리합니다. 본문은 쓰지 않습니다. 전문 기획 방법은 활성화된 Skill에서만 나옵니다. 사용자 방향과 확정된 사실을 유지하고, 입력에 있는 hook id만 사용하며, 결과 도구를 통해 구체적인 목표 하나와 읽기 쉬운 Markdown 계획을 제출합니다.";
+    return "입력된 governed context를 한 장의 memo로 정리합니다. 본문은 쓰지 않습니다. 전문 기획 방법은 활성화된 Skill에서만 나옵니다. 사용자 방향과 확정된 사실을 유지하고, 입력에 있는 hook id만 사용하며, 결과 도구를 통해 구체적인 목표 하나와 읽기 쉬운 Markdown 계획을 제출합니다. 목표, 본문, 모든 소제목은 한국어만 사용하고 영어 병기나 괄호 번역을 넣지 않습니다. 상태 변화, 지식 변화, 관계 변화, 사건과 자원, 복선 진행처럼 한국어 소제목을 사용합니다. 영문 전문 지침은 방법 안내이지 복사할 출력 표제가 아닙니다. 도구 필드 이름과 복선 식별자는 그대로 유지합니다.";
   }
   return language === "en"
     ? "Compile the supplied governed context into one chapter memo. Do not write prose. Professional planning methodology comes only from the activated Skill. Preserve user direction and established facts, use only supplied hook ids, and submit one concrete goal plus a readable Markdown plan through the result tool."

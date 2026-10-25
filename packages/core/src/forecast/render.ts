@@ -244,7 +244,9 @@ function joinOrNone(items: ReadonlyArray<string>, none: string, joiner: string):
 
 function koreanRiskLabel(kind: string): string {
   const labels: Record<string, string> = { pacing: "전개 속도", causality: "인과관계", timeline: "시간 순서", character: "인물", continuity: "연속성", world: "세계 설정", hook: "복선", logic: "논리", relationship: "관계" };
-  return labels[kind] ?? "기타 위험";
+  const normalized = kind.trim().toLowerCase().replace(/[- ]/g, "_").replace(/_risk$/, "");
+  const variants: Record<string, string> = { information_density: "정보 밀도", progression_deviation: "전개 이탈", character_focus: "인물 비중", causal: "인과관계", plot_progression: "사건 전개" };
+  return labels[normalized] ?? variants[normalized] ?? `기타 위험(${kind})`;
 }
 
 function escapeCell(value: string): string {

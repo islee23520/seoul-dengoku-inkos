@@ -164,7 +164,7 @@ export class ShortFictionOutlineAgent extends BaseAgent {
         name: "submit_short_outline",
         label: "Submit short-fiction outline",
         description: "Submit the story title and complete readable plan.",
-        parameters: shortOutlineToolSchema(input.chapterCount,input.title),
+        parameters: shortOutlineToolSchema(input.chapterCount,input.title,input.language),
       }, { temperature: 0.55, maxTokens: Math.min(8192, safeShortFictionOutputBudget(this.ctx.client.defaults.maxTokens)) });
 
     return {
@@ -511,12 +511,10 @@ export class ShortFictionPackagingAgent extends BaseAgent {
     if (!title || !intro || sellingPoints.some((point) => !point)) {
       throw new Error("Short-fiction packaging returned incomplete structured fields.");
     }
+    const sales = { title, intro, sellingPoints, coverPrompt: result.coverPrompt.trim(), rawContent: "" };
     return {
-      title,
-      intro,
-      sellingPoints,
-      coverPrompt: result.coverPrompt.trim(),
-      rawContent: [
+      ...sales,
+      rawContent: input.language === "ko" ? renderShortFictionSalesPackage(sales, "ko") : [
         `# ${title}`,
         `## Intro\n${intro}`,
         `## Selling Points\n${sellingPoints.map((point) => `- ${point}`).join("\n")}`,

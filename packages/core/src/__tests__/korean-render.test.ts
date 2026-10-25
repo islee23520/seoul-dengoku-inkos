@@ -1,7 +1,7 @@
 import { splitChapters } from "../utils/chapter-splitter.js";
 import { renderShortFictionDraftMarkdown, renderShortFictionSalesPackage } from "../agents/short-fiction.js";
 import { describe, expect, it, vi } from "vitest";
-import { ShortFictionOutlineAgent } from "../agents/short-fiction.js";
+import { ShortFictionOutlineAgent, ShortFictionPackagingAgent } from "../agents/short-fiction.js";
 import { renderForecastComparisonMarkdown, renderSelectedBranchPlanMarkdown } from "../forecast/render.js";
 import type { NarrativeForecast } from "../forecast/schema.js";
 import { getPlannerMemoSystemPrompt, buildPlannerUserMessage } from "../agents/planner-prompts.js";
@@ -37,6 +37,24 @@ function makeKoreanForecast(): NarrativeForecast {
 }
 
 describe("Korean rendering branches", () => {
+  it("keeps package rawContent equal to the Korean Markdown delivery", async () => {
+    const agent = new ShortFictionPackagingAgent({ client: { defaults: { maxTokens: 4096 } }, model: "fixture", projectRoot: "/tmp" } as never);
+    const submit = vi.spyOn(agent as never as { submitStructured: (...args: unknown[]) => Promise<unknown> }, "submitStructured").mockResolvedValue({ result: { title: "편지", intro: "소개", sellingPoints: ["반전"], coverPrompt: "A letter" } });
+    try {
+      const sales = await agent.generatePackage({ direction: "편지", outlineMarkdown: "기획", draft: { storyTitle: "편지", rawContent: "", chapters: [] }, language: "ko" });
+      expect(sales.rawContent).toBe(renderShortFictionSalesPackage(sales, "ko"));
+    } finally { submit.mockRestore(); }
+  });
+  it("preserves distinctions between free-form forecast risk kinds", () => {
+    const forecast = makeKoreanForecast();
+    const kinds = ["pacing_risk", "information_density", "progression_deviation", "character_focus", "unlisted_one", "unlisted_two"];
+    const changed = { ...forecast, branches: [{ ...forecast.branches[0]!, risks: kinds.map(kind => ({ kind, description: "위험" })) }] };
+    const output = renderForecastComparisonMarkdown(changed);
+    const labels = [...output.matchAll(/^- \[([^\]]+)\] 위험/gm)].map(match => match[1]);
+    expect(new Set(labels).size).toBe(kinds.length);
+    expect(labels).toContain("기타 위험(unlisted_one)");
+    expect(changed.branches[0]!.risks.map(risk => risk.kind)).toEqual(kinds);
+  });
   it("renders structured outline chapter headings in Korean", async () => {
     const agent = new ShortFictionOutlineAgent({ client: { defaults: { maxTokens: 4096 } }, model: "fixture", projectRoot: "/tmp" } as never);
     const submit = vi.spyOn(agent as never as { submitStructured: (...args: unknown[]) => Promise<unknown> }, "submitStructured").mockResolvedValue({ result: { storyTitle: "편지", planMarkdown: "편지가 도착한다.", chapter_1_plan: "봉투를 연다." } });
