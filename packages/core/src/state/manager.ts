@@ -58,12 +58,14 @@ export class StateManager {
   constructor(private readonly projectRoot: string) {}
 
   private static defaultAuthorIntent(language: Language): string {
+    if (language === "ko") return "# 작가 의도\n\n(이 작품의 장기적인 창작 방향을 적으세요.)\n";
     return language === "zh"
       ? "# 作者意图\n\n（在这里描述这本书的长期创作方向。）\n"
       : "# Author Intent\n\n(Describe the long-horizon vision for this book here.)\n";
   }
 
   private static defaultCurrentFocus(language: Language): string {
+    if (language === "ko") return "# 현재 집필 방향\n\n## 우선 과제\n\n(다음 1~3장에서 우선 진행할 내용을 적으세요.)\n";
     return language === "zh"
       ? "# 当前聚焦\n\n## 当前重点\n\n（描述接下来 1-3 章最需要优先推进的内容。）\n"
       : "# Current Focus\n\n## Active Focus\n\n(Describe what the next 1-3 chapters should prioritize.)\n";

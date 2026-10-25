@@ -85,7 +85,16 @@ function buildProjectConfig(projectDir: string, language: BookConfig["language"]
   };
 }
 
-function buildProjectEnvTemplate(globalConfigured: boolean): string {
+function buildProjectEnvTemplate(globalConfigured: boolean, language: BookConfig["language"]): string {
+  if (language === "ko") return [
+    "# 프로젝트별 모델 설정 재정의 (선택)",
+    globalConfigured ? "# 기본 설정은 ~/.inkos/.env에서 가져옵니다." : "# 이 파일을 수정하지 않아도 스튜디오에서 제공자, 모델, 키를 관리할 수 있습니다.",
+    "# 프로젝트별 서비스를 사용하려면 스튜디오에서 스튜디오 설정 사용으로 전환하세요.",
+    "# 이 프로젝트에서만 재정의하려면 아래 주석을 해제하세요:",
+    "# INKOS_LLM_PROVIDER=openai", "# INKOS_LLM_BASE_URL=", "# INKOS_LLM_API_KEY=", "# INKOS_LLM_MODEL=",
+    ...(!globalConfigured ? ["# INKOS_LLM_API_FORMAT=chat", "# INKOS_LLM_STREAM=true"] : []),
+    "", "# 웹 검색 (선택):", "# TAVILY_API_KEY=tvly-xxxxx", "",
+  ].join("\n");
   if (globalConfigured) {
     return [
       "# Project-level LLM overrides (optional)",
@@ -145,7 +154,7 @@ export async function initializeProjectDirectory(
   const globalConfigured = await hasGlobalConfig();
 
   await Promise.all([
-    writeMaybe(join(projectDir, ".env"), buildProjectEnvTemplate(globalConfigured), overwriteSupportFiles),
+    writeMaybe(join(projectDir, ".env"), buildProjectEnvTemplate(globalConfigured, language), overwriteSupportFiles),
     ensureProjectGitignore(projectDir),
     writeMaybe(join(projectDir, ".nvmrc"), "22\n", overwriteSupportFiles),
     writeMaybe(join(projectDir, ".node-version"), "22\n", overwriteSupportFiles),

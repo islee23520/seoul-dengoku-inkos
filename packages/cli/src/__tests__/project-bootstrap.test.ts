@@ -27,6 +27,11 @@ describe("project bootstrap", () => {
     expect(config.name).toMatch(/^inkos-bootstrap-/);
     expect(config.version).toBe("0.1.0");
     expect(config.language).toBe(language);
+    if (language === "ko") {
+      const template = await readFile(join(tempDir, ".env"), "utf8");
+      expect(template).toContain("INKOS_LLM_PROVIDER=openai");
+      expect(template).not.toMatch(/Project-level|Global config|Web search|使用/);
+    }
     expect(config.llm.configSource).toBe("studio");
     expect(config.llm.service).toBe("custom");
     expect(config.llm.model).toBe("");

@@ -86,15 +86,15 @@ export class WriterAgent extends BaseAgent {
     return "writer";
   }
 
-  private localize(language: Language, messages: { zh: string; en: string }): string {
-    return language === "en" ? messages.en : messages.zh;
+  private localize(language: Language, messages: { zh: string; en: string; ko: string }): string {
+    return language === "ko" ? messages.ko : language === "en" ? messages.en : messages.zh;
   }
 
-  private logInfo(language: Language, messages: { zh: string; en: string }): void {
+  private logInfo(language: Language, messages: { zh: string; en: string; ko: string }): void {
     this.ctx.logger?.info(this.localize(language, messages));
   }
 
-  private logWarn(language: Language, messages: { zh: string; en: string }): void {
+  private logWarn(language: Language, messages: { zh: string; en: string; ko: string }): void {
     this.ctx.logger?.warn(this.localize(language, messages));
   }
 
@@ -138,6 +138,7 @@ export class WriterAgent extends BaseAgent {
     this.logInfo(resolvedLanguage, {
       zh: `阶段 1：创作正文（第${chapterNumber}章）`,
       en: `Phase 1: creative writing for chapter ${chapterNumber}`,
+      ko: `1단계: 제${chapterNumber}장 본문 집필`,
     });
 
     const { result: creativeSubmission, usage: creativeUsage } = await this.submitStructured(
@@ -165,6 +166,7 @@ export class WriterAgent extends BaseAgent {
     this.logInfo(resolvedLanguage, {
       zh: `阶段 2：状态结算（第${chapterNumber}章，${creative.wordCount}字）`,
       en: `Phase 2: state settlement for chapter ${chapterNumber} (${creative.wordCount} words)`,
+      ko: `2단계: 제${chapterNumber}장 상태 정산 (${creative.wordCount}자)`,
     });
     const settleResult = await this.settle({
       book,
@@ -295,6 +297,7 @@ export class WriterAgent extends BaseAgent {
     this.logInfo(resolvedLang, {
       zh: `阶段 2：把第${params.chapterNumber}章事实投影到运行时状态`,
       en: `Phase 2: projecting chapter ${params.chapterNumber} facts into runtime state`,
+      ko: `2단계: 제${params.chapterNumber}장 사실을 실행 상태에 반영`,
     });
     const systemPrompt = buildSettlerSystemPrompt(params.book, params.bookRules, resolvedLang);
     const governedControlBlock = this.buildSettlerGovernedControlBlock(
