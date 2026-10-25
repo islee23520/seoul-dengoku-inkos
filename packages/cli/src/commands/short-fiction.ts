@@ -156,11 +156,11 @@ shortCommand
       if (opts.json) {
         log(JSON.stringify(payload, null, 2));
       } else {
-        log(`Skills: ${activatedSkillIds(activatedSkills).join(", ")}`);
-        log(`Short run complete: ${result.storyId}`);
-        log(`Final: ${payload.finalMarkdownPath}`);
-        log(`Sales package: ${payload.salesPackagePath}`);
-        log(formatCoverStatus(payload.coverImagePath, payload.coverError));
+        log(language === "ko" ? `집필 지침: ${activatedSkillIds(activatedSkills).join(", ")}` : `Skills: ${activatedSkillIds(activatedSkills).join(", ")}`);
+        log(language === "ko" ? `단편 생성 완료: ${result.storyId}` : `Short run complete: ${result.storyId}`);
+        log(language === "ko" ? `완성 원고: ${payload.finalMarkdownPath}` : `Final: ${payload.finalMarkdownPath}`);
+        log(language === "ko" ? `출판 패키지: ${payload.salesPackagePath}` : `Sales package: ${payload.salesPackagePath}`);
+        log(language === "ko" ? (payload.coverImagePath ? `표지: ${payload.coverImagePath}` : "표지: 생성 생략") : formatCoverStatus(payload.coverImagePath, payload.coverError));
       }
     } catch (e) {
       logCommandError("Short run failed", e, opts.json);

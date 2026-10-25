@@ -342,9 +342,9 @@ async function produceShort(
     outlineMarkdown = resumedOutline;
     await ensureShortWork(root, storyId, options.title?.trim() || storyId, language);
     workTitle = options.title?.trim() || (await loadWorkManifest(root, storyId)).title;
-    options.onProgress?.("Resuming from existing outline (skipping outline stages)...");
+    options.onProgress?.(language === "ko" ? "저장된 개요에서 계속 진행..." : "Resuming from existing outline (skipping outline stages)...");
   } else {
-    options.onProgress?.("Creating short fiction outline...");
+    options.onProgress?.(language === "ko" ? "단편 개요 생성 중..." : "Creating short fiction outline...");
     const outlineAgent = new ShortFictionOutlineAgent(options.runtimes.planner);
     const outlineV1 = await outlineAgent.createOutline({
       title: options.title,
@@ -410,7 +410,7 @@ async function produceShort(
     await writeShortProductionState(root,baseDir,productionState);
   }
   try {
-    options.onProgress?.("Writing full short fiction draft...");
+    options.onProgress?.(language === "ko" ? "단편 전체 초고 집필 중..." : "Writing full short fiction draft...");
     const writer = new ShortFictionWriterAgent(options.runtimes.writer);
     const persistDraftBatch = async (
       draft: ShortFictionBatchDraft,
@@ -451,7 +451,7 @@ async function produceShort(
     if (missingFromDraft.length > 0) {
       await writeDraftArtifacts(root, baseDir, "v001-partial", draftV1, language);
       for (let attempt = 1; missingFromDraft.length > 0 && attempt <= SHORT_FICTION_DRAFT_COMPLETION_ATTEMPTS; attempt += 1) {
-        options.onProgress?.(`Completing missing short fiction chapters: ${missingFromDraft.join(", ")}...`);
+        options.onProgress?.(language === "ko" ? `미완성 장 집필 중: ${missingFromDraft.join(", ")}...` : `Completing missing short fiction chapters: ${missingFromDraft.join(", ")}...`);
         draftV1 = await writer.continueDraft({
           direction: productionState.intent,
           maxChaptersPerCall: options.maxChaptersPerCall,
@@ -483,7 +483,7 @@ async function produceShort(
     }
     const inputHash = shortInputHash({ draft: draftV1, outline: outlineMarkdown, intent: productionState.intent });
     if (stopAfter !== "package") {
-    options.onProgress?.("Reviewing completed short fiction...");
+    options.onProgress?.(language === "ko" ? "단편 완성 원고 검토 중..." : "Reviewing completed short fiction...");
     const draftReviewer = new ShortFictionDraftReviewerAgent(options.runtimes.draftReview);
     const requestHash = shortReviewRequestHash({...options, chapterCount, charsPerChapter, language});
     try {
@@ -531,7 +531,7 @@ async function produceShort(
     if (stopAfter === "review") return stageResult("review", [draftReviewWarning ? "reviews/draft-warning.md" : "reviews/draft-v001.md", "production-state.json"]);
     if(!reviewOrPackageOnly)await writeFinalArtifacts(root, baseDir, finalDraft, language);
 
-    options.onProgress?.("Generating synopsis and cover prompt...");
+    options.onProgress?.(language === "ko" ? "줄거리 소개와 표지 프롬프트 생성 중..." : "Generating synopsis and cover prompt...");
     await refreshDelivery();
     const packager = new ShortFictionPackagingAgent(options.runtimes.package);
     try {
@@ -738,7 +738,7 @@ async function reviseShortFictionWithLock(options: ShortFictionRunOptions & { re
     onRevisionProgress:async(progress)=>{
       checkpoint = { ...checkpoint, progress };
       await commitAtomicFileSet({rootDir:options.projectRoot,writes:[textWrite(checkpointPath,JSON.stringify(checkpoint,null,2))]});
-      options.onProgress?.(`Short revision progress: ${progress.completed.length}/${progress.plan.chapters.length} chapters`);
+      options.onProgress?.(language === "ko" ? `단편 수정 진행: ${progress.completed.length}/${progress.plan.chapters.length}장` : `Short revision progress: ${progress.completed.length}/${progress.plan.chapters.length} chapters`);
     },
   }).catch(error => {
     const failure = error instanceof Error ? error : new Error(String(error));

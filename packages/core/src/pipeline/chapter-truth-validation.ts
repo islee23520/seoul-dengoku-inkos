@@ -31,7 +31,7 @@ export async function validateChapterTruthPersistence(params: {
     contextPackage: ContextPackage;
   };
   readonly language: LengthLanguage;
-  readonly logWarn: (message: { zh: string; en: string }) => void;
+  readonly logWarn: (message: { zh: string; en: string; ko: string }) => void;
   readonly logger?: Pick<Logger, "warn">;
 }): Promise<{
   readonly validation: ValidationResult;
@@ -71,6 +71,7 @@ export async function validateChapterTruthPersistence(params: {
     params.logWarn({
       zh: `状态校验：第${params.chapterNumber}章发现 ${validation.observations.length} 条观察`,
       en: `State validation: ${validation.observations.length} observation(s) for chapter ${params.chapterNumber}`,
+      ko: `상태 검증: 제${params.chapterNumber}장에 소견 ${validation.observations.length}개`,
     });
     for (const observation of validation.observations) {
       params.logger?.warn(`  [${observation.code}] ${observation.summary}`);

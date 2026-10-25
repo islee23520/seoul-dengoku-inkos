@@ -47,10 +47,10 @@ export async function createNarrativeForecast(
   const horizon = positiveInteger(options.horizon, FORECAST_DEFAULT_HORIZON, "horizon");
   const bookDir = await resolveBookDir(options.projectRoot, bookId);
 
-  options.onProgress?.("Reading canonical context...");
   const context = await buildForecastContext({ bookDir, bookId });
+  options.onProgress?.(context.language === "ko" ? "정사 맥락 읽기 완료..." : "Reading canonical context...");
 
-  options.onProgress?.(`Projecting ${branchCount} candidate branches...`);
+  options.onProgress?.(context.language === "ko" ? `${branchCount}개 후보 분기 전개 중...` : `Projecting ${branchCount} candidate branches...`);
   const agent = new NarrativeForecastAgent(options.runtime);
   const modelOutput = await agent.generateBranches({
     contextMarkdown: renderForecastContextMarkdown(context),
@@ -79,7 +79,7 @@ export async function createNarrativeForecast(
     })),
   };
 
-  options.onProgress?.("Writing forecast artifacts...");
+  options.onProgress?.(context.language === "ko" ? "전개 산출물 저장 중..." : "Writing forecast artifacts...");
   const paths = await store.save(forecast, renderForecastComparisonMarkdown(forecast));
   return { forecast, ...paths };
 }

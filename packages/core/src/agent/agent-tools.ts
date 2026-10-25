@@ -1766,7 +1766,14 @@ export function createShortFictionRunTool(
       );
 
       return textResult(
-        [
+        language === "ko" ? [
+          `단편 원고 「${result.storyId}」 저장 완료. 검토 소견 ${result.observations.length}개.`,
+          ...(result.delivery ? [`납품 검증: ${result.delivery.status === "checks_passed" ? "통과" : "수정 필요"}`] : []),
+          `완성 원고: ${result.finalMarkdownPath}`,
+          `출판 패키지: ${result.salesPackagePath}`,
+          `표지 프롬프트: ${result.coverPromptPath}`,
+          result.coverImagePath ? `표지 이미지: ${result.coverImagePath}` : "표지 이미지: 생성 생략. 원고는 보존되어 있습니다.",
+        ].join("\n") : [
           `Short fiction manuscript "${result.storyId}" saved with ${result.observations.length} observation(s).`,
           ...(result.delivery?[`Delivery checks: ${result.delivery.status}`]:[]),
           ...(result.delivery?.measurements?[`Measured manuscript: ${JSON.stringify(result.delivery.measurements)}`]:[]),

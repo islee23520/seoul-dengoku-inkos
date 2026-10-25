@@ -146,7 +146,7 @@ export function buildPipelineConfig(
     ? (progress: { readonly elapsedMs: number; readonly totalChars: number; readonly chineseChars: number; readonly status: string }) => {
         if (progress.status === "streaming") {
           logger?.info(
-            `streaming ${Math.round(progress.elapsedMs / 1000)}s, ${progress.totalChars} chars (${progress.chineseChars} CJK)`,
+            config.language === "ko" ? `생성 중 ${Math.round(progress.elapsedMs / 1000)}초, ${progress.totalChars}자` : `streaming ${Math.round(progress.elapsedMs / 1000)}s, ${progress.totalChars} chars (${progress.chineseChars} CJK)`,
           );
         }
       }

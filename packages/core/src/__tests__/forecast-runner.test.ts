@@ -65,6 +65,20 @@ describe("narrative forecast mini-flow", () => {
     });
   });
 
+  it("reports Korean forecast progress and preserves machine keys", async () => {
+    const { root, bookDir } = await fixture();
+    stubForecastAgent();
+    const path = join(bookDir, "book.json");
+    const book = JSON.parse(await readFile(path, "utf8"));
+    await writeFile(path, JSON.stringify({ ...book, language: "ko" }));
+    const messages: string[] = [];
+    const result = await createNarrativeForecast({ projectRoot: root, bookId: "demo-book", divergence: "선택", branchCount: 2, runtime: runtime(root), onProgress: message => messages.push(message) });
+    expect(messages).toHaveLength(3);
+    expect(messages.join("\n")).not.toMatch(/[A-Za-z\u4e00-\u9fff]/);
+    const loaded = await getNarrativeForecast({ projectRoot: root, bookId: "demo-book", forecastId: result.forecast.forecastId });
+    expect(loaded.forecast).toEqual(result.forecast);
+  });
+
   it("marks an existing forecast stale after canonical state advances", async () => {
     const { root, bookDir } = await fixture();
     stubForecastAgent();
