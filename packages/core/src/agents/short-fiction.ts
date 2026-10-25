@@ -20,6 +20,7 @@ import {
 } from "../prompts/short-fiction.js";
 import { ShortDraftBatchToolSchema, ShortDraftChapterToolSchema, ShortRevisionChapterToolSchema, shortDraftBatchToolSchema, shortOutlineToolSchema, ShortPackageToolSchema, ShortRevisionPlanSchema, shortRevisionPlanSubmissionSchema } from "./short-fiction-tool.js";
 import { numberReviewSource, type Observation } from "../models/observation.js";
+import { chapterDocumentBody, chapterDocumentHeading } from "../utils/chapter-document.js";
 
 export const SHORT_FICTION_DEFAULT_CHAPTERS = 12;
 export const SHORT_FICTION_DEFAULT_CHARS_PER_CHAPTER = 1000;
@@ -643,7 +644,7 @@ export function renderShortFictionDraftMarkdown(
     ...completedChapters.map((chapter) => [
       `## ${formatShortFictionChapterHeading(chapter.number, chapter.title, language)}`,
       "",
-      chapter.content,
+      language === "ko" ? chapterDocumentBody(chapter.content, chapter.number, chapter.title, language) : chapter.content,
     ].join("\n")),
   ].filter(Boolean).join("\n\n");
 }
@@ -655,7 +656,7 @@ export function formatShortFictionChapterHeading(
 ): string {
   const trimmed = title.trim();
   if (!trimmed) throw new Error(`Short-fiction chapter ${number} has no title.`);
-  return language === "en" ? `Chapter ${number}: ${trimmed}` : `第${number}章 ${trimmed}`;
+  return chapterDocumentHeading(number, trimmed, language).slice(2);
 }
 
 // charsPerChapter is the language's native unit (zh chars / en words). The 2.2

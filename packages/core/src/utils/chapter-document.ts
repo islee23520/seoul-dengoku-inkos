@@ -3,7 +3,7 @@ import {readChapterHeading} from './chapter-splitter.js';
 import type {Language} from '../models/language.js';
 
 export function chapterDocumentHeading(number:number,title:string,language:Language):string{
-  return language==='en'?`# Chapter ${number}: ${title}`:`# 第${number}章 ${title}`;
+  return language==='en'?`# Chapter ${number}: ${title}`:language==='ko'?`# 제${number}장 ${title}`:`# 第${number}章 ${title}`;
 }
 
 /** The numbered title belongs to the document wrapper, not the chapter prose. */

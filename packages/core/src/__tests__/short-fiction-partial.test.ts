@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { renderShortFictionDraftMarkdown, findIncompleteShortFictionChapters, validateShortFictionDraftForFinal, ShortFictionBatchDraftSchema } from "../agents/short-fiction.js";
+import { splitChapters } from "../utils/chapter-splitter.js";
 
 describe("short-fiction partial persistence", () => {
+  it("renders Korean full-manuscript chapter headings that round-trip without duplicate wrappers", () => {
+    const draft = { storyTitle: "이야기", rawContent: "", chapters: [
+      { number: 1, title: "도착", content: "## 第1章 도착\n\n# 제1장 도착\n\n본문.", charCount: 0 },
+      { number: 2, title: "출발", content: "다음 본문.", charCount: 0 },
+    ] };
+    const markdown = renderShortFictionDraftMarkdown(draft, "ko");
+    expect(markdown.split("\n").filter(line => line.startsWith("## "))).toEqual(["## 제1장 도착", "## 제2장 출발"]);
+    expect(splitChapters(markdown)).toEqual([
+      { title: "도착", content: "본문." },
+      { title: "출발", content: "다음 본문." },
+    ]);
+  });
+
   it("rejects near-empty chapters using actual native length and exposes the chapters to resume", () => {
     const draft = {storyTitle:"Draft",rawContent:"",chapters:[
       {number:1,title:"One",content:"One short line.",charCount:1000},

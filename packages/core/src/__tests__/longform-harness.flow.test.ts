@@ -142,6 +142,7 @@ describe("long-form harness mini-flow", () => {
   it.each([
     {language:'en' as const, wrappers:'# Chapter 1: Chapter 1\n\nCHAPTER I. Working title\n\n'},
     {language:'zh' as const, wrappers:'# 第1章 Chapter 1\n\n## 第一章 初稿标题\n\n'},
+    {language:'ko' as const, wrappers:'# 第1章 Chapter 1\n\n## 제1장 초안\n\n'},
   ])("persists and round-trips a chapter with review observations and $language heading variants", async ({language,wrappers}) => {
     const root = await tempRoot();
     const bookDir = join(root, "works", "novel", "source");
@@ -183,6 +184,7 @@ describe("long-form harness mini-flow", () => {
       chapterFiles: 1,
     });
     const chapterFile=(await readdir(join(bookDir,'chapters'))).find(file=>file.endsWith('.md'))!;
+    if(language==='ko')expect((await readFile(join(bookDir,'chapters',chapterFile),'utf8')).split('\n')[0]).toBe(`# 제1장 ${output.title}`);
     expect(await loadChaptersFromPath(join(bookDir,'chapters',chapterFile))).toEqual([{title:output.title,content:prose}]);
     // Export also handles already persisted documents from older writers. It
     // normalizes the delivery copy while preserving the source bytes.
