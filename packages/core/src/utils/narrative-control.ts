@@ -41,9 +41,9 @@ export function renderNarrativeSelectedContext(
   entries: ReadonlyArray<ContextPackage["selectedContext"][number]>,
   language: Language = "zh",
 ): string {
-  const heading = language === "en" ? "Evidence" : "证据";
-  const reasonLabel = language === "en" ? "reason" : "原因";
-  const detailLabel = language === "en" ? "detail" : "细节";
+  const heading = language === "en" ? "Evidence" : language === "ko" ? "근거" : "证据";
+  const reasonLabel = language === "en" ? "reason" : language === "ko" ? "이유" : "原因";
+  const detailLabel = language === "en" ? "detail" : language === "ko" ? "세부 사항" : "细节";
 
   return entries
     .map((entry, index) => {

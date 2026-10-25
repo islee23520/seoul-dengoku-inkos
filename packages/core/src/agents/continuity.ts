@@ -40,6 +40,8 @@ export class ContinuityAuditor extends BaseAgent {
     const isEnglish = options.language === "en";
     const systemPrompt = isEnglish
       ? "Audit this chapter against the activated review Skill and supplied governed context. Identify each observation with a code, assessment and exact numbered source lines. Do not estimate length; the host computes it. Return a concise overall summary. An empty observations array is valid."
+      : options.language === "ko"
+      ? "활성화된 검토 Skill과 제공된 권위 있는 맥락을 기준으로 이 장을 검토하세요. 각 관찰에 코드, 판단 및 번호가 매겨진 원문의 정확한 증거 행을 제출하세요. 분량은 호스트가 계산하므로 추정하지 마세요. 전체 요약과 각 관찰의 summary는 한국어로 작성하세요. 원문 증거 인용은 언어에 관계없이 그대로 보존하고 코드와 판단 값은 도구 스키마를 따르세요. observations가 비어 있어도 유효합니다."
       : "按已激活的审稿 Skill 和权威上下文审查本章。为每条观察提交代码、判断以及所给编号原文中的确切证据行。不估算字数，字数由宿主计算。提交简短总结，observations 为空是合法结果。";
     const governedContext = renderNarrativeSelectedContext(
       options.contextPackage.selectedContext,
@@ -82,9 +84,11 @@ export class ContinuityAuditor extends BaseAgent {
       ],
       sources, {
         name: "submit_chapter_review",
-        label: isEnglish ? "Submit chapter review" : "提交章节审稿",
+        label: isEnglish ? "Submit chapter review" : options.language === "ko" ? "장 검토 제출" : "提交章节审稿",
         description: isEnglish
           ? "Submit evidence-backed observations only."
+          : options.language === "ko"
+          ? "증거에 근거한 관찰만 제출하고 전체 요약과 관찰 요약은 한국어로 작성하세요."
           : "只提交有证据的审稿观察。",
       },
       { temperature: options.temperature ?? 0.3, maxTokens: Math.min(4096, this.ctx.client.defaults.maxTokens),categoryRequired:!!comparison,
