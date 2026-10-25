@@ -17,15 +17,16 @@ describe("project bootstrap", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("creates a minimal Studio-first project when none exists", async () => {
+  it.each(["zh", "en", "ko"] as const)("creates a minimal Studio-first project in %s when none exists", async (language) => {
     const { ensureProjectDirectoryInitialized } = await import("../project-bootstrap.js");
 
-    const initialized = await ensureProjectDirectoryInitialized(tempDir, { language: "zh" });
+    const initialized = await ensureProjectDirectoryInitialized(tempDir, { language });
 
     expect(initialized).toBe(true);
     const config = JSON.parse(await readFile(join(tempDir, "inkos.json"), "utf-8"));
     expect(config.name).toMatch(/^inkos-bootstrap-/);
     expect(config.version).toBe("0.1.0");
+    expect(config.language).toBe(language);
     expect(config.llm.configSource).toBe("studio");
     expect(config.llm.service).toBe("custom");
     expect(config.llm.model).toBe("");

@@ -3,7 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { log, logError } from "../utils.js";
 import { initializeProjectDirectory } from "../project-bootstrap.js";
-import { LanguageSchema } from "@actalk/inkos-core";
+import { LanguageSchema } from "../writing-language.js";
 
 export const initCommand = new Command("init")
   .description("Initialize an InkOS project (current directory by default)")
