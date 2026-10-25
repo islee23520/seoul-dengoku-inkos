@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -28,6 +28,40 @@ describe("Studio authored-language endpoints", () => {
     calls.style.mockResolvedValue("한국어 문체 지침");
   });
   afterEach(async () => { await rm(root, { recursive: true, force: true }); });
+
+  it.each(["zh", "en", "ko"])("persists %s through both project language routes", async (language) => {
+    const app = createStudioServer({} as never, root);
+    for (const [method, path] of [["PUT", "/api/v1/project"], ["POST", "/api/v1/project/language"]]) {
+      const config = JSON.parse(await readFile(join(root, "inkos.json"), "utf8"));
+      await writeFile(join(root, "inkos.json"), JSON.stringify({ ...config, language: language === "zh" ? "en" : "zh" }));
+      const response = await app.request(path, {
+        method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language }),
+      });
+      expect(response.status).toBe(200);
+      expect(JSON.parse(await readFile(join(root, "inkos.json"), "utf8")).language).toBe(language);
+    }
+  });
+
+  it.each(["ja", "", null, 1])("rejects invalid project language %s without writing other updates", async (language) => {
+    const before = await readFile(join(root, "inkos.json"), "utf8");
+    const app = createStudioServer({} as never, root);
+    for (const [method, path] of [["PUT", "/api/v1/project"], ["POST", "/api/v1/project/language"]]) {
+      const response = await app.request(path, {
+        method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language, temperature: 0.1 }),
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toHaveProperty("error");
+      expect(await readFile(join(root, "inkos.json"), "utf8")).toBe(before);
+    }
+  });
+
+  it("preserves authored language when updating unrelated project settings", async () => {
+    const response = await createStudioServer({} as never, root).request("/api/v1/project", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ temperature: 0.3 }),
+    });
+    expect(response.status).toBe(200);
+    expect(JSON.parse(await readFile(join(root, "inkos.json"), "utf8"))).toMatchObject({ language: "ko", llm: { temperature: 0.3 } });
+  });
 
   it("sends Korean book context to the inspiration worker", async () => {
     const state = new StateManager(root);
