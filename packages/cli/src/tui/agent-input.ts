@@ -54,6 +54,7 @@ export async function processTuiAgentInput(params: {
   );
   const userTimestamp = Date.now();
   const currentBookId = params.activeBookId ?? params.session.activeBookId ?? null;
+  // Local command copy supports zh/en; authored language must reach the agent unchanged.
   const language = config.language === "en" ? "en" : "zh";
   const useWork = params.input.trim().match(/^\/use\s+([^\s]+)$/i)?.[1];
   const selectedWork = useWork ? await loadWorkManifest(params.projectRoot, useWork) : null;
@@ -138,7 +139,7 @@ export async function processTuiAgentInput(params: {
       ...(route.actionPayload ? { actionPayload: route.actionPayload } : {}),
       ...(route.requestedSkills?.length ? { requestedSkills: route.requestedSkills } : {}),
       ...(route.playMode ? { playMode: route.playMode } : {}),
-      language,
+      language: config.language,
       pipeline,
       projectRoot: params.projectRoot,
       model: client._piModel
