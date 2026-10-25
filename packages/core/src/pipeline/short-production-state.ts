@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
+import { LanguageSchema } from "../models/language.js";
 import { ObservationSchema } from "../models/observation.js";
 import { safeChildPath } from "../utils/path-safety.js";
 import { commitAtomicFileSet } from "../utils/atomic-file-set.js";
@@ -25,7 +26,7 @@ export const ShortProductionStateSchema = z.object({
     minChapterLength:z.number().int().positive().optional(),
     maxChapterLength:z.number().int().positive().optional(),
     openingHookChars:z.number().int().positive().optional(),
-    language:z.enum(["zh","en"]),
+    language:LanguageSchema,
   }).optional(),
   revisionRequest: z.string().optional(),
   reviewScope: z.string().optional(),
@@ -36,7 +37,7 @@ export const ShortProductionStateSchema = z.object({
       unit:z.enum(["non-whitespace-characters","words"]),openingHookLength:z.number().int().nonnegative(),
       chapterLengths:z.array(z.object({number:z.number().int().positive(),length:z.number().int().nonnegative()})),
     }).optional(),
-    target:z.record(z.unknown()).optional(),
+    target:z.record(z.string(),z.unknown()).optional(),
   }).strict().optional(),
   stages: z.object({
     review: ShortStageSchema.optional(),

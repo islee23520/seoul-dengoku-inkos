@@ -11,11 +11,12 @@ import { runAsWorkflowTrajectory } from "../../llm/agent-trajectory.js";
 import {StateManager} from "../../state/manager.js";
 import type {WorkManifest} from "../contracts.js";
 import type {BookConfig} from "../../models/book.js";
+import { asLanguage } from "../../models/language.js";
 
 interface LongformToolOptions {
   readonly activeWork?: {readonly work:WorkManifest;readonly projectRoot:string};
   readonly actionPayload?: ActionPayload;
-  readonly language?: "zh" | "en";
+  readonly language?: string;
   readonly activeSkills?: () => ReadonlyArray<ActivatedSkillGuidance>;
   readonly workerSkills?: (worker: string) => ReadonlyArray<ActivatedSkillGuidance>;
 }
@@ -26,7 +27,7 @@ const BookCreateParams = Type.Object({
   bookId: Type.Optional(Type.String()),
   genre: Type.Optional(Type.String()),
   platform: Type.Optional(Type.String({ minLength: 1 })),
-  language: Type.Optional(Type.Union([Type.Literal("zh"), Type.Literal("en")])),
+  language: Type.Optional(Type.Union([Type.Literal("zh"), Type.Literal("en"), Type.Literal("ko")])),
   targetChapters: Type.Optional(Type.Integer({ minimum: 1 })),
   chapterWordCount: Type.Optional(Type.Integer({ minimum: 1 })),
   minChapterLength: Type.Optional(Type.Integer({minimum:1,description:"Lower end of an explicitly requested per-chapter range. Preserve it as a Work constraint."})),
@@ -118,18 +119,16 @@ export function createBookFoundationTool(
         const payload = options.actionPayload?.createBook;
         const title = options.activeWork?.work.title || payload?.title?.trim() || params.title?.trim();
         if (!title) throw new Error("create_book requires title.");
-        const id = options.activeWork ? resolveBookId("create_book",params.bookId,options.activeWork.work.id) : payload?.title
-          ? deriveBookIdFromTitle(payload.title) || `book-${Date.now().toString(36)}`
-          : params.bookId
-            ? assertSafeBookId(params.bookId, "create_book.bookId")
-            : deriveBookIdFromTitle(title) || `book-${Date.now().toString(36)}`;
+        const id = options.activeWork ? resolveBookId("create_book",params.bookId,options.activeWork.work.id) : params.bookId
+          ? assertSafeBookId(params.bookId, "create_book.bookId")
+          : deriveBookIdFromTitle(title) || `book-${Date.now().toString(36)}`;
         let existing:BookConfig|undefined;
         if(options.activeWork){
           const state=new StateManager(options.activeWork.projectRoot);
           if(await state.isCompleteBookDirectory(state.bookDir(id)))throw Object.assign(new Error("The current book is already initialized; use its foundation or chapter revision action."),{code:"BOOK_ALREADY_INITIALIZED"});
           try{existing=await state.loadBookConfig(id);}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error;}
         }
-        const language = existing?.language ?? (options.activeWork ? options.activeWork.work.language==="en"?"en":"zh" : payload?.language ?? params.language ?? options.language ?? "zh");
+        const language = asLanguage(existing?.language ?? (options.activeWork ? options.activeWork.work.language : payload?.language ?? params.language ?? options.language));
         const skills = activatedSkills(options, "architect");
         const now = new Date().toISOString();
         progress(onUpdate, `Creating foundation for "${id}"...`);

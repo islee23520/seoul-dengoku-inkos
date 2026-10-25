@@ -12,10 +12,10 @@ import {
   type FanficMode,
 } from "@actalk/inkos-core";
 import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError, resolveCliProfileSkills } from "../utils.js";
+import { LanguageSchema } from "../writing-language.js";
 import {
   formatFanficCanonMissingError,
   formatFanficSourceDirEmptyError,
-  resolveCliLanguage,
 } from "../localization.js";
 
 export const fanficCommand = new Command("fanfic")
@@ -31,7 +31,7 @@ fanficCommand
   .option("--platform <platform>", "Target platform", "other")
   .option("--target-chapters <n>", "Target chapter count", "100")
   .option("--chapter-words <n>", "Words per chapter", "3000")
-  .option("--lang <language>", "Writing language: zh or en. Defaults from the project.")
+  .option("--lang <language>", "Writing language: zh, en, or ko. Defaults from the project.")
   .option("--json", "Output JSON")
   .action(async (opts) => {
     try {
@@ -58,7 +58,7 @@ fanficCommand
         status: "outlining",
         targetChapters: parseInt(opts.targetChapters, 10),
         chapterWordCount: parseInt(opts.chapterWords, 10),
-        language: resolveCliLanguage(opts.lang ?? config.language),
+        language: LanguageSchema.parse(opts.lang ?? config.language),
         createdAt: now,
         updatedAt: now,
         fanficMode: mode,

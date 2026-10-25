@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LanguageSchema } from "../models/language.js";
 
 // Narrative Forecast (issue #342): non-canonical multi-branch story projection.
 // A forecast never becomes canon by itself — it is planning material stored
@@ -55,7 +56,7 @@ export const NarrativeForecastSchema = z.object({
   forecastId: z.string().min(1),
   bookId: z.string().min(1),
   createdAt: z.string().min(1),
-  language: z.enum(["zh", "en"]),
+  language: LanguageSchema,
   divergence: z.string().min(1),
   horizon: z.number().int().positive(),
   baseChapter: z.number().int().min(0),

@@ -1,7 +1,11 @@
 import type { ContextPackage } from "../models/input-governance.js";
 import { renderNarrativeSelectedContext } from "../utils/narrative-control.js";
+import type { Language } from "../models/language.js";
 
-export function getPlannerMemoSystemPrompt(language: "zh" | "en" = "zh"): string {
+export function getPlannerMemoSystemPrompt(language: Language = "zh"): string {
+  if (language === "ko") {
+    return "입력된 governed context를 한 장의 memo로 정리합니다. 본문은 쓰지 않습니다. 전문 기획 방법은 활성화된 Skill에서만 나옵니다. 사용자 방향과 확정된 사실을 유지하고, 입력에 있는 hook id만 사용하며, 결과 도구를 통해 구체적인 목표 하나와 읽기 쉬운 Markdown 계획을 제출합니다. 목표, 본문, 모든 소제목은 한국어만 사용하고 영어 병기나 괄호 번역을 넣지 않습니다. 상태 변화, 지식 변화, 관계 변화, 사건과 자원, 복선 진행처럼 한국어 소제목을 사용합니다. 영문 전문 지침은 방법 안내이지 복사할 출력 표제가 아닙니다. 도구 필드 이름과 복선 식별자는 그대로 유지합니다.";
+  }
   return language === "en"
     ? "Compile the supplied governed context into one chapter memo. Do not write prose. Professional planning methodology comes only from the activated Skill. Preserve user direction and established facts, use only supplied hook ids, and submit one concrete goal plus a readable Markdown plan through the result tool."
     : "把输入的 governed context 编译为一份章节 memo，不写正文。专业规划方法只来自已激活 Skill。保留用户方向和既成事实，只使用输入中存在的 hook id，并通过结果工具提交一个具体目标和完整可读的 Markdown 计划。";
@@ -16,7 +20,7 @@ export function buildPlannerUserMessage(input: {
     readonly target: number;
     readonly unit: string;
   };
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
 }): string {
   const language = input.language ?? "zh";
   const context = renderNarrativeSelectedContext(input.contextPackage.selectedContext, language);
@@ -30,6 +34,16 @@ export function buildPlannerUserMessage(input: {
       previous ? `## Previous chapter\n${previous}` : "",
       "## Host length telemetry",
       `User target: ${input.lengthBudget.target} ${input.lengthBudget.unit}. Treat it as a creative constraint, not a host quality verdict.`,
+    ].filter(Boolean).join("\n\n");
+  }
+  if (language === "ko") {
+    return [
+      `# 제${input.chapterNumber}장 memo 요청`,
+      instruction ? `## 현재 사용자 지시\n${instruction}` : "",
+      `## 정식 컨텍스트\n${context}`,
+      previous ? `## 이전 장 본문\n${previous}` : "",
+      "## 호스트 분량 데이터",
+      `사용자 목표: ${input.lengthBudget.target} ${input.lengthBudget.unit}. 이것은 창작 제약이지 호스트의 품질 평가가 아닙니다.`,
     ].filter(Boolean).join("\n\n");
   }
   return [

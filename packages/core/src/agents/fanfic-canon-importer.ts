@@ -3,6 +3,7 @@ import type { FanficMode } from "../models/book.js";
 import { FanficCanonToolSchema } from "./fanfic-canon-tool.js";
 import { estimateTextTokens } from "../llm/provider.js";
 import { semanticInputBudget, splitTextByEstimatedTokens } from "../llm/semantic-input.js";
+import type { Language } from "../models/language.js";
 
 export interface FanficCanonOutput {
   readonly fullDocument: string;
@@ -17,7 +18,7 @@ export class FanficCanonImporter extends BaseAgent {
     sourceText: string,
     sourceName: string,
     fanficMode: FanficMode,
-    language: "zh" | "en" = "zh",
+    language: Language = "zh",
   ): Promise<FanficCanonOutput> {
     const source = await this.prepareSourceText(sourceText, sourceName, language);
     const systemPrompt = language === "en"
@@ -62,7 +63,7 @@ export class FanficCanonImporter extends BaseAgent {
   private async prepareSourceText(
     sourceText: string,
     sourceName: string,
-    language: "zh" | "en",
+    language: Language,
   ): Promise<{ readonly text: string; readonly compiled: boolean }> {
     const budget = semanticInputBudget(this.ctx.client, { reservedOutputTokens: 16_384 });
     if (budget === undefined || estimateTextTokens(sourceText) <= budget) {
@@ -94,17 +95,17 @@ export class FanficCanonImporter extends BaseAgent {
       );
       const content = response.content.trim();
       if (!content) throw new Error(`Fanfic source compiler returned empty output for chunk ${index + 1}/${chunks.length}.`);
-      notes.push([`## 片段 ${index + 1}/${chunks.length}`, content].join("\n\n"));
+      notes.push([language === "ko" ? `## 구간 ${index + 1}/${chunks.length}` : `## 片段 ${index + 1}/${chunks.length}`, content].join("\n\n"));
     }
 
     return {
       compiled: true,
       text: [
-        language === "en" ? `# ${sourceName} semantic source package` : `# 《${sourceName}》语义资料包`,
+        language === "en" ? `# ${sourceName} semantic source package` : language === "ko" ? `# ${sourceName} 원본 자료 모음` : `# 《${sourceName}》语义资料包`,
         "",
         language === "en"
           ? "Compiled from every source chunk for traceable canon extraction."
-          : "逐段读取完整原作素材后编译，用于可追溯正典抽取。",
+          : language === "ko" ? "원작의 모든 구간을 읽어 출처를 추적할 수 있는 설정 자료로 정리했습니다." : "逐段读取完整原作素材后编译，用于可追溯正典抽取。",
         "",
         ...notes,
       ].join("\n"),

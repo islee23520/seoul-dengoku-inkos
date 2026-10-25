@@ -58,6 +58,7 @@ import {
   resolveProfileSkillActivations,
   resolveWorkSkillActivations,
 } from "../skills/index.js";
+import type { Language } from "../models/language.js";
 import { assertSafeBookId } from "../utils/book-id.js";
 import { PlayStore } from "../play/play-store.js";
 import {
@@ -104,7 +105,7 @@ export interface AgentSessionConfig {
   /** Agent Skills explicitly disabled for this turn. */
   disabledSkills?: ReadonlyArray<string>;
   /** Language for the system prompt. */
-  language: string;
+  language: Language;
   /** PipelineRunner for sub-agent tool delegation. */
   pipeline: PipelineRunner;
   /** Project root directory (all creative Works live under works/). */
@@ -1326,7 +1327,7 @@ async function runAgentSessionUnlocked(
         ? { sourceToolAssistantUuid: lastAssistantUuid }
         : {}),
       ...(role === "user" && config.attachments?.length ? { display: { userInput: {
-        text: userMessage, language: language === "en" ? "en" as const : "zh" as const,
+        text: userMessage, language,
         attachments: config.attachments.map(attachment => ({ filename: attachment.filename })),
       } } } : {}),
       message: persistedMessage,

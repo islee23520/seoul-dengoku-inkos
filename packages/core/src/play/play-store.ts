@@ -4,6 +4,7 @@ import { PlayPresentationSchema, legacyPresentation, type PlayPresentation } fro
 import { legacyReceiptChoices } from "./play-presentation-legacy.js";
 import { join, normalize, sep } from "node:path";
 import { z } from "zod";
+import { LanguageSchema } from "../models/language.js";
 import {
   PlayCurrentStateSchema,
   PlayEventSchema,
@@ -36,7 +37,7 @@ const PlayWorldSchema = z.object({
   visualContract: z.string(),
   mode: z.enum(["open", "guided"]),
   choiceCount:z.number().int().positive().optional(),
-  language: z.enum(["zh", "en"]),
+  language: LanguageSchema,
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 }).strict();

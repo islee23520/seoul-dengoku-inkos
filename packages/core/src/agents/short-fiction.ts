@@ -20,6 +20,7 @@ import {
 } from "../prompts/short-fiction.js";
 import { ShortDraftBatchToolSchema, ShortDraftChapterToolSchema, ShortRevisionChapterToolSchema, shortDraftBatchToolSchema, shortOutlineToolSchema, ShortPackageToolSchema, ShortRevisionPlanSchema, shortRevisionPlanSubmissionSchema } from "./short-fiction-tool.js";
 import { numberReviewSource, type Observation } from "../models/observation.js";
+import { chapterDocumentBody, chapterDocumentHeading } from "../utils/chapter-document.js";
 
 export const SHORT_FICTION_DEFAULT_CHAPTERS = 12;
 export const SHORT_FICTION_DEFAULT_CHARS_PER_CHAPTER = 1000;
@@ -87,6 +88,7 @@ export interface ShortFictionSalesPackage {
 export function renderShortFictionSalesPackage(sales: ShortFictionSalesPackage, language: ShortFictionLanguage): string {
   const headings = language === "en"
     ? ["## Synopsis", "## Selling Points", "## Cover Prompt"]
+    : language === "ko" ? ["## 줄거리 소개", "## 판매 포인트", "## 표지 프롬프트"]
     : ["## 简介", "## 卖点", "## 封面提示词"];
   return [`# ${sales.title}`, "", headings[0], "", sales.intro, "", headings[1], "",
     ...sales.sellingPoints.map(point => `- ${point}`), "", headings[2], "", sales.coverPrompt].join("\n");
@@ -162,13 +164,13 @@ export class ShortFictionOutlineAgent extends BaseAgent {
         name: "submit_short_outline",
         label: "Submit short-fiction outline",
         description: "Submit the story title and complete readable plan.",
-        parameters: shortOutlineToolSchema(input.chapterCount,input.title),
+        parameters: shortOutlineToolSchema(input.chapterCount,input.title,input.language),
       }, { temperature: 0.55, maxTokens: Math.min(8192, safeShortFictionOutputBudget(this.ctx.client.defaults.maxTokens)) });
 
     return {
       storyTitle: response.result.storyTitle.trim(),
       rawContent: [response.result.planMarkdown.trim(), ...Array.from({length:input.chapterCount},(_,index) => (
-        `## ${input.language === "en" ? `Chapter ${index+1}` : `第${index+1}章`}\n\n${(response.result as Record<string,string>)[`chapter_${index+1}_plan`]!.trim()}`
+        `## ${input.language === "en" ? `Chapter ${index+1}` : input.language === "ko" ? `제${index+1}장` : `第${index+1}章`}\n\n${(response.result as Record<string,string>)[`chapter_${index+1}_plan`]!.trim()}`
       ))].join("\n\n"),
     };
   }
@@ -509,12 +511,10 @@ export class ShortFictionPackagingAgent extends BaseAgent {
     if (!title || !intro || sellingPoints.some((point) => !point)) {
       throw new Error("Short-fiction packaging returned incomplete structured fields.");
     }
+    const sales = { title, intro, sellingPoints, coverPrompt: result.coverPrompt.trim(), rawContent: "" };
     return {
-      title,
-      intro,
-      sellingPoints,
-      coverPrompt: result.coverPrompt.trim(),
-      rawContent: [
+      ...sales,
+      rawContent: input.language === "ko" ? renderShortFictionSalesPackage(sales, "ko") : [
         `# ${title}`,
         `## Intro\n${intro}`,
         `## Selling Points\n${sellingPoints.map((point) => `- ${point}`).join("\n")}`,
@@ -635,7 +635,7 @@ export function renderShortFictionDraftMarkdown(
   draft: ShortFictionBatchDraft,
   language: ShortFictionLanguage = "zh",
 ): string {
-  const hookHeading = language === "en" ? "## Opening Hook" : "## 开篇钩子";
+  const hookHeading = language === "en" ? "## Opening Hook" : language === "ko" ? "## 도입 장면" : "## 开篇钩子";
   const completedChapters = draft.chapters.filter((chapter) => chapter.title.trim() && chapter.content.trim());
   return [
     `# ${draft.storyTitle}`,
@@ -643,7 +643,7 @@ export function renderShortFictionDraftMarkdown(
     ...completedChapters.map((chapter) => [
       `## ${formatShortFictionChapterHeading(chapter.number, chapter.title, language)}`,
       "",
-      chapter.content,
+      language === "ko" ? chapterDocumentBody(chapter.content, chapter.number, chapter.title, language) : chapter.content,
     ].join("\n")),
   ].filter(Boolean).join("\n\n");
 }
@@ -655,7 +655,7 @@ export function formatShortFictionChapterHeading(
 ): string {
   const trimmed = title.trim();
   if (!trimmed) throw new Error(`Short-fiction chapter ${number} has no title.`);
-  return language === "en" ? `Chapter ${number}: ${trimmed}` : `第${number}章 ${trimmed}`;
+  return chapterDocumentHeading(number, trimmed, language).slice(2);
 }
 
 // charsPerChapter is the language's native unit (zh chars / en words). The 2.2

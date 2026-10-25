@@ -18,6 +18,7 @@ import {
   getPlannerMemoSystemPrompt,
 } from "./planner-prompts.js";
 import { ComposerAgent } from "./composer.js";
+import type { Language } from "../models/language.js";
 
 export interface PlanChapterInput {
   readonly book: BookConfig;
@@ -104,6 +105,7 @@ export class PlannerAgent extends BaseAgent {
     const intentMarkdown = this.renderIntentMarkdown(
       intent,
       memo,
+      input.book.language,
     );
     await writeFile(runtimePath, intentMarkdown, "utf-8");
 
@@ -121,7 +123,7 @@ export class PlannerAgent extends BaseAgent {
     readonly chapterNumber: number;
     readonly contextPackage: ContextPackage;
     readonly currentInstruction?: string;
-    readonly language?: "zh" | "en";
+    readonly language?: Language;
     readonly lengthSpec: LengthSpec;
   }): Promise<ChapterMemo> {
     const language = input.language ?? "zh";
@@ -132,7 +134,7 @@ export class PlannerAgent extends BaseAgent {
       currentInstruction: input.currentInstruction,
       lengthBudget: {
         target: input.lengthSpec.target,
-        unit: input.lengthSpec.countingMode === "en_words" ? "words" : "字",
+        unit: input.lengthSpec.countingMode === "en_words" ? "words" : language === "ko" ? "자" : "字",
       },
       language,
     });
@@ -163,23 +165,24 @@ export class PlannerAgent extends BaseAgent {
   private renderIntentMarkdown(
     intent: ChapterIntent,
     memo: ChapterMemo,
+    language: Language,
   ): string {
     const memoBody = memo.body.trim();
     const threadRefsLine = memo.threadRefs.length > 0
       ? memo.threadRefs.map((id) => `- ${id}`).join("\n")
-      : "- (none)";
+      : language === "ko" ? "- (없음)" : "- (none)";
 
     return [
-      "# Chapter Intent",
+      language === "ko" ? "# 장 집필 의도" : "# Chapter Intent",
       "",
-      "## Goal",
+      language === "ko" ? "## 목표" : "## Goal",
       intent.goal,
       "",
-      "## Chapter Memo",
-      "### Thread Refs",
+      language === "ko" ? "## 장 기획 메모" : "## Chapter Memo",
+      language === "ko" ? "### 관련 복선" : "### Thread Refs",
       threadRefsLine,
       "",
-      "### Body",
+      language === "ko" ? "### 계획 본문" : "### Body",
       memoBody,
     ].join("\n");
   }

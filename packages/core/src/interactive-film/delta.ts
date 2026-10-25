@@ -16,7 +16,13 @@ const upsertRemove = <T extends z.ZodTypeAny>(item: T) =>
   }).strict();
 
 export const StoryGraphDeltaSchema = z.object({
-  worldAnchor: WorldAnchorSchema.partial().optional(),
+  worldAnchor: z.object({
+    storyCore: WorldAnchorSchema.shape.storyCore.removeDefault().optional(),
+    theme: WorldAnchorSchema.shape.theme.removeDefault().optional(),
+    genre: WorldAnchorSchema.shape.genre.removeDefault().optional(),
+    worldRules: WorldAnchorSchema.shape.worldRules.removeDefault().optional(),
+    durationMinutes: WorldAnchorSchema.shape.durationMinutes.removeDefault().optional(),
+  }).strict().optional(),
   characters: upsertRemove(CharacterSchema).optional(),
   nodes: upsertRemove(StoryNodeSchema).optional(),
   variables: upsertRemove(VariableSchema).optional(),

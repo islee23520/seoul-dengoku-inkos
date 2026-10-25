@@ -2,12 +2,13 @@ import { BaseAgent } from "./base.js";
 import type { ContextFragment, SemanticContextCompileResult } from "../harness/context-compiler.js";
 import { estimateTextTokens } from "../llm/provider.js";
 import { semanticInputBudget, splitTextByEstimatedTokens } from "../llm/semantic-input.js";
+import type { Language } from "../models/language.js";
 
 export interface SemanticContextCompilerInput {
   readonly intent: string;
   readonly maxTokens: number;
   readonly fragments: ReadonlyArray<ContextFragment>;
-  readonly language: "zh" | "en";
+  readonly language: Language;
 }
 
 /** Infrastructure worker shared by story and Play context assembly. */

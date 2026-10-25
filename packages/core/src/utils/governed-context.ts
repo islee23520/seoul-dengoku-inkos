@@ -1,8 +1,9 @@
 import type { ContextPackage } from "../models/input-governance.js";
+import type { Language } from "../models/language.js";
 
 export function buildGovernedMemoryEvidenceBlocks(
   contextPackage: ContextPackage,
-  language?: "zh" | "en",
+  language?: Language,
 ): {
   readonly referencedHooksBlock?: string;
   readonly hooksBlock?: string;

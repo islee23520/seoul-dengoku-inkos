@@ -1,0 +1,8 @@
+This program is a modified version of InkOS by Narcooo and contributors.
+Upstream: https://github.com/Narcooo/inkos
+Modified by the Seoul Dengoku project, beginning 2026-10-24.
+Modifications through 2026-10-26 add Korean as a book language (schema,
+CLI, length counting, retrieval tokenizer, prompts, Studio language
+selection, and Korean output labels). This modified version is released
+under the GNU AGPL v3 only, the same license as the upstream LICENSE file.
+Source: https://github.com/islee23520/seoul-dengoku-inkos

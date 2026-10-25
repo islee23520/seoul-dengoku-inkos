@@ -3,6 +3,7 @@ import { runWorkerAgent } from "../agent/worker-agent.js";
 import { prepareWorkerMessages } from "./base.js";
 import type { ActivatedSkillGuidance } from "../agent/skill-tool.js";
 import { loadAvailableAgentSkills, mergeActivatedSkillGuidance } from "../skills/index.js";
+import type { Language } from "../models/language.js";
 
 export async function compileStyleGuide(input: {
   readonly client: LLMClient;
@@ -10,7 +11,7 @@ export async function compileStyleGuide(input: {
   readonly projectRoot: string;
   readonly referenceText: string;
   readonly sourceName?: string;
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
   readonly activeSkills?: ReadonlyArray<ActivatedSkillGuidance>;
   readonly signal?: AbortSignal;
 }): Promise<string> {

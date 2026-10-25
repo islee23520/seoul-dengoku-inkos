@@ -22,6 +22,7 @@ import { generateNodeImage, defaultNodeImageDeps, type NodeImageDeps } from "../
 import { prepareWorkerMessages } from "../agents/base.js";
 import type { ActivatedSkillGuidance } from "./skill-tool.js";
 import { createInspectFilmTool, createExportFilmTool,createSetFilmRequirementsTool } from "../harness/tools/film-delivery.js";
+import type { Language } from "../models/language.js";
 import{readFilmRequirements,checkFilmRequirements}from'../interactive-film/delivery-requirements.js';
 
 // ---------------------------------------------------------------------------
@@ -233,7 +234,7 @@ const ReviseNodeParams = Type.Object({
   }),
 });
 
-export type FilmAuthoringLanguage = "zh" | "en";
+export type FilmAuthoringLanguage = Language;
 
 function nodeSystemPrompt(language: FilmAuthoringLanguage, revision = false): string {
   const operation = language === 'en'

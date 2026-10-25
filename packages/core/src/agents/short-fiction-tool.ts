@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 
-export function shortOutlineToolSchema(chapterCount:number,title?:string) {
+export function shortOutlineToolSchema(chapterCount:number,title?:string,language?:"zh"|"en"|"ko") {
   return Type.Object({
     storyTitle:title?.trim()?Type.Literal(title.trim()):Type.String({minLength:1}),
-    planMarkdown:Type.String({minLength:1,description:"Shared premise, protagonist and central conflict. Do not repeat the chapter plans here."}),
+    planMarkdown:Type.String({minLength:1,description:language === "ko" ? "공통 전제, 주인공, 중심 갈등을 한국어 소제목과 본문으로 작성합니다. 영어 병기 없이 장별 계획은 아래 별도 필드에 둡니다." : "Shared premise, protagonist and central conflict. Do not repeat the chapter plans here."}),
     ...Object.fromEntries(Array.from({length:chapterCount},(_,index)=>[`chapter_${index+1}_plan`,Type.String({minLength:1,description:`Chapter ${index+1}: a concise complete scene plan, about 150–250 Chinese characters or 80–120 English words. State the action, conflict, causal evidence, payoff and transition; keep later chapters' events in their own plans.`})])),
   },{additionalProperties:false});
 }

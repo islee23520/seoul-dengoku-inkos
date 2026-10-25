@@ -14,6 +14,7 @@ import type { PipelineRunner } from "../pipeline/runner.js";
 import type { ActionPayload, RequestedIntent } from "../interaction/action-envelope.js";
 import type { PlayMode } from "../interaction/session.js";
 import type { ActivatedSkillGuidance } from "../agent/skill-tool.js";
+import { asLanguage } from "../models/language.js";
 import {
   createContinuationImportTool,
   createDeleteLatestChapterTool,
@@ -185,7 +186,7 @@ export function createProductionCapabilityRegistry(
   environment: ProductionCapabilityEnvironment,
 ): CapabilityRegistry {
   const registry = new CapabilityRegistry();
-  const lang = environment.language === "en" ? "en" : "zh";
+  const lang = asLanguage(environment.language);
   const profile = createBuiltInWorkProfileRegistry(environment.projectRoot).require(environment.work?.profileId ?? environment.profileId);
   // The same policy governs execution and the offered confirmation action space.
   const allowedProposals = Object.entries(CONFIRMED_CAPABILITY_BINDINGS).flatMap(([intent, binding]) => {
@@ -206,7 +207,7 @@ export function createProductionCapabilityRegistry(
     attachmentPaths: environment.attachmentPaths,
   }) : undefined;
   const workspaceTools: ProductionToolAction[] = [
-    ...createProfileWorkTools(environment.projectRoot, registry).map(tool => tool.name === "list_work_profiles" ? readAction(tool) : writeAction(tool)),
+    ...createProfileWorkTools(environment.projectRoot, registry, lang).map(tool => tool.name === "list_work_profiles" ? readAction(tool) : writeAction(tool)),
     ...(proposalTool ? [readAction(proposalTool)] : []),
     readAction(createReadTool(environment.projectRoot, {
       scope: "project",

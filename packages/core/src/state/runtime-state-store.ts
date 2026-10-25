@@ -13,6 +13,7 @@ import { applyRuntimeStateDelta, type RuntimeStateSnapshot } from "./state-reduc
 import { validateRuntimeState } from "./state-validator.js";
 import { arbitrateRuntimeStateDeltaHooks } from "../utils/hook-arbiter.js";
 import { commitAtomicFileSet } from "../utils/atomic-file-set.js";
+import type { Language } from "../models/language.js";
 
 export interface RuntimeStateArtifacts {
   readonly snapshot: RuntimeStateSnapshot;
@@ -24,7 +25,7 @@ export interface RuntimeStateArtifacts {
 
 export async function createInitialRuntimeState(input: {
   readonly bookDir: string;
-  readonly language: "zh" | "en";
+  readonly language: Language;
   readonly hooks?: ReadonlyArray<HookRecord>;
 }): Promise<RuntimeStateSnapshot> {
   const snapshot: RuntimeStateSnapshot = {
@@ -65,7 +66,7 @@ export async function loadRuntimeStateSnapshot(bookDir: string): Promise<Runtime
 export async function loadRuntimeStateSnapshotAtChapter(params: {
   readonly bookDir: string;
   readonly chapterNumber: number;
-  readonly language: "zh" | "en";
+  readonly language: Language;
 }): Promise<RuntimeStateSnapshot> {
   const snapshotDir = join(
     params.bookDir,
@@ -94,7 +95,7 @@ export async function loadRuntimeStateSnapshotAtChapter(params: {
 export async function buildRuntimeStateArtifacts(params: {
   readonly bookDir: string;
   readonly delta: RuntimeStateDelta;
-  readonly language: "zh" | "en";
+  readonly language: Language;
   readonly allowReapply?: boolean;
   readonly allowNewHooks?: boolean;
 }): Promise<RuntimeStateArtifacts> {
@@ -111,7 +112,7 @@ export async function buildRuntimeStateArtifacts(params: {
 export function buildRuntimeStateArtifactsFromSnapshot(params: {
   readonly snapshot: RuntimeStateSnapshot;
   readonly delta: RuntimeStateDelta;
-  readonly language: "zh" | "en";
+  readonly language: Language;
   readonly allowReapply?: boolean;
   readonly allowNewHooks?: boolean;
 }): RuntimeStateArtifacts {

@@ -16,6 +16,7 @@ import {
   type ShortFictionReference,
   type ShortFictionLanguage,
 } from "@actalk/inkos-core";
+import { LanguageSchema } from "../writing-language.js";
 import { buildPipelineConfig, findProjectRoot, loadConfig, log, logError, resolveCliProfileSkills } from "../utils.js";
 
 export { extractResponsesImageBase64, resolveCoverApiKey } from "@actalk/inkos-core";
@@ -114,6 +115,9 @@ shortCommand
         tool: createShortFictionRunTool(pipeline, root, { language, defaultSkills: activatedSkills }),
         parameters: {
           direction: opts.direction,
+          minChapterLength: null,
+          maxChapterLength: null,
+          openingHookChars: null,
           reference: reference?.text,
           storyId: opts.storyId,
           chapters: chapterCount,
@@ -152,14 +156,15 @@ shortCommand
       if (opts.json) {
         log(JSON.stringify(payload, null, 2));
       } else {
-        log(`Skills: ${activatedSkillIds(activatedSkills).join(", ")}`);
-        log(`Short run complete: ${result.storyId}`);
-        log(`Final: ${payload.finalMarkdownPath}`);
-        log(`Sales package: ${payload.salesPackagePath}`);
-        log(formatCoverStatus(payload.coverImagePath, payload.coverError));
+        log(language === "ko" ? `집필 지침: ${activatedSkillIds(activatedSkills).join(", ")}` : `Skills: ${activatedSkillIds(activatedSkills).join(", ")}`);
+        log(language === "ko" ? `단편 생성 완료: ${result.storyId}` : `Short run complete: ${result.storyId}`);
+        log(language === "ko" ? `완성 원고: ${payload.finalMarkdownPath}` : `Final: ${payload.finalMarkdownPath}`);
+        log(language === "ko" ? `출판 패키지: ${payload.salesPackagePath}` : `Sales package: ${payload.salesPackagePath}`);
+        log(language === "ko" ? (payload.coverImagePath ? `표지: ${payload.coverImagePath}` : "표지: 생성 생략") : formatCoverStatus(payload.coverImagePath, payload.coverError));
       }
     } catch (e) {
       logCommandError("Short run failed", e, opts.json);
+      process.exitCode = 1;
     }
   });
 
@@ -187,8 +192,11 @@ interface ShortRunOptions {
 }
 
 function parseShortFictionLanguage(value: string): ShortFictionLanguage {
-  if (value === "zh" || value === "en") return value;
-  throw new Error("lang must be zh or en.");
+  const parsed = LanguageSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error(`lang must be one of: ${LanguageSchema.options.join(", ")}.`);
+  }
+  return parsed.data;
 }
 
 interface ShortRunModels {

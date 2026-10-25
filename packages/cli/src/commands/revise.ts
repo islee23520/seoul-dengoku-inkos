@@ -52,7 +52,7 @@ export const reviseCommand = new Command("revise")
       }));
 
       const mode = opts.mode as ReviseMode;
-      if (!opts.json) log(`Revising "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"} [mode: ${mode}]...`);
+      if (!opts.json) log(language === "ko" ? `「${bookId}」 ${chapterNumber ? `제${chapterNumber}장` : "최신 장"} 수정 중...` : `Revising "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"} [mode: ${mode}]...`);
 
       const activatedSkills = await resolveCliProfileSkills(root, "longform-novel", { includeRecommended: true });
       const action = await executeExplicitCapabilityTool({
@@ -77,11 +77,11 @@ export const reviseCommand = new Command("revise")
       if (opts.json) {
         log(JSON.stringify(result, null, 2));
       } else {
-        log(result.changed
+        log(language === "ko" ? `  제${result.chapterNumber}장: ${result.changed ? "수정 완료" : "실행할 수정 없음"}` : result.changed
           ? `  Chapter ${result.chapterNumber} revised`
           : `  Chapter ${result.chapterNumber}: no actionable change`);
-        log(`  Words: ${result.wordCount}`);
-        log(`  Review observations: ${result.observations.length}`);
+        log(language === "ko" ? `  분량: ${result.wordCount}자` : `  Words: ${result.wordCount}`);
+        log(language === "ko" ? `  검토 소견: ${result.observations.length}` : `  Review observations: ${result.observations.length}`);
       }
 
       // Unlike write commands, the pipeline sends no notification for

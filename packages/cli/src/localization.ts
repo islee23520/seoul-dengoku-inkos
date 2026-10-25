@@ -1,6 +1,6 @@
 import { formatLengthCount, resolveLengthCountingMode, type Observation } from "@actalk/inkos-core";
 
-export type CliLanguage = "zh" | "en";
+export type CliLanguage = "zh" | "en" | "ko";
 
 type WriteResultShape = {
   readonly chapterNumber: number;
@@ -16,8 +16,8 @@ type ImportResultShape = {
   readonly continueBookId: string;
 };
 
-function localize(language: CliLanguage, messages: { zh: string; en: string }): string {
-  return language === "en" ? messages.en : messages.zh;
+function localize(language: CliLanguage, messages: { zh: string; en: string; ko?: string }): string {
+  return language === "ko" ? messages.ko ?? messages.zh : language === "en" ? messages.en : messages.zh;
 }
 
 function normalizeCliLanguageTag(value: string | undefined): CliLanguage | undefined {
@@ -29,6 +29,7 @@ function normalizeCliLanguageTag(value: string | undefined): CliLanguage | undef
   if (normalized.startsWith("en")) {
     return "en";
   }
+  if (normalized.startsWith("ko")) return "ko";
   if (normalized.startsWith("zh")) {
     return "zh";
   }
@@ -61,6 +62,7 @@ export function formatBookCreateCreating(
 ): string {
   return localize(language, {
     zh: `创建书籍 "${title}"（${genre} / ${platform}）...`,
+    ko: `작품 "${title}" 생성 중 (${genre} / ${platform})...`,
     en: `Creating book "${title}" (${genre} / ${platform})...`,
   });
 }
@@ -68,6 +70,7 @@ export function formatBookCreateCreating(
 export function formatBookCreateCreated(language: CliLanguage, bookId: string): string {
   return localize(language, {
     zh: `已创建书籍：${bookId}`,
+    ko: `작품 생성 완료: ${bookId}`,
     en: `Book created: ${bookId}`,
   });
 }
@@ -75,6 +78,7 @@ export function formatBookCreateCreated(language: CliLanguage, bookId: string): 
 export function formatBookCreateLocation(language: CliLanguage, bookId: string): string {
   return localize(language, {
     zh: `  位置：works/${bookId}/source/`,
+    ko: `  위치: works/${bookId}/source/`,
     en: `  Location: works/${bookId}/source/`,
   });
 }
@@ -82,6 +86,7 @@ export function formatBookCreateLocation(language: CliLanguage, bookId: string):
 export function formatBookCreateFoundationReady(language: CliLanguage): string {
   return localize(language, {
     zh: "  故事圣经、大纲和书籍规则已生成。",
+    ko: "  이야기 설정, 개요, 작품 규칙을 생성했습니다.",
     en: "  Story bible, outline, book rules generated.",
   });
 }
@@ -89,6 +94,7 @@ export function formatBookCreateFoundationReady(language: CliLanguage): string {
 export function formatBookCreateNextStep(language: CliLanguage, bookId: string): string {
   return localize(language, {
     zh: `下一步：inkos write next ${bookId}`,
+    ko: `다음 단계: inkos write next ${bookId}`,
     en: `Next: inkos write next ${bookId}`,
   });
 }
@@ -101,6 +107,7 @@ export function formatWriteNextProgress(
 ): string {
   return localize(language, {
     zh: `[${current}/${total}] 为「${bookId}」撰写章节...`,
+    ko: `[${current}/${total}] 「${bookId}」 집필 중...`,
     en: `[${current}/${total}] Writing chapter for "${bookId}"...`,
   });
 }
@@ -109,18 +116,21 @@ export function formatWriteNextResultLines(
   language: CliLanguage,
   result: WriteResultShape,
 ): string[] {
-  const lengthLabel = formatLengthCount(result.wordCount, resolveLengthCountingMode(language));
+  const lengthLabel = formatLengthCount(result.wordCount, resolveLengthCountingMode(language), language);
   const lines = [
     localize(language, {
       zh: `  第${result.chapterNumber}章：${result.title}`,
+      ko: `  제${result.chapterNumber}장: ${result.title}`,
       en: `  Chapter ${result.chapterNumber}: ${result.title}`,
     }),
     localize(language, {
       zh: `  字数：${lengthLabel}`,
+      ko: `  분량: ${lengthLabel}`,
       en: `  Length: ${lengthLabel}`,
     }),
     localize(language, {
       zh: `  审查观察：${result.observations.length}`,
+      ko: `  검토 소견: ${result.observations.length}`,
       en: `  Review observations: ${result.observations.length}`,
     }),
   ];
@@ -128,6 +138,7 @@ export function formatWriteNextResultLines(
   if (result.observations.length > 0) {
     lines.push(localize(language, {
       zh: "  问题：",
+      ko: "  확인 사항:",
       en: "  Issues:",
     }));
     for (const observation of result.observations) {
@@ -141,6 +152,7 @@ export function formatWriteNextResultLines(
 export function formatWriteNextComplete(language: CliLanguage): string {
   return localize(language, {
     zh: "完成。",
+    ko: "완료.",
     en: "Done.",
   });
 }
@@ -153,6 +165,7 @@ export function formatAutoWriteStart(
 ): string {
   return localize(language, {
     zh: `自动写作「${bookId}」：从第${startChapter}章连续写到第${targetChapter}章...`,
+    ko: `「${bookId}」 자동 집필: 제${startChapter}장부터 제${targetChapter}장까지...`,
     en: `Auto-writing "${bookId}": chapter ${startChapter} through chapter ${targetChapter}...`,
   });
 }
@@ -165,18 +178,19 @@ export function formatAutoWriteAlreadyComplete(
 ): string {
   return localize(language, {
     zh: `「${bookId}」已写到第${writtenChapters}章（目标第${targetChapter}章），无需继续。`,
+    ko: `「${bookId}」는 ${writtenChapters}장까지 집필했습니다 (목표 ${targetChapter}장).`,
     en: `"${bookId}" already has ${writtenChapters} chapter(s) written (target: chapter ${targetChapter}). Nothing to do.`,
   });
 }
 
 export type NotifyCommandAction = "write-next" | "write-rewrite" | "revise" | "audit" | "auto";
 
-const NOTIFY_ACTION_LABELS: Record<NotifyCommandAction, { zh: string; en: string }> = {
-  "write-next": { zh: "写作", en: "Write" },
-  "write-rewrite": { zh: "重写", en: "Rewrite" },
-  revise: { zh: "修订", en: "Revise" },
-  audit: { zh: "审计", en: "Audit" },
-  auto: { zh: "自动连写", en: "Auto-write" },
+const NOTIFY_ACTION_LABELS: Record<NotifyCommandAction, { zh: string; en: string; ko: string }> = {
+  "write-next": { zh: "写作", en: "Write", ko: "집필" },
+  "write-rewrite": { zh: "重写", en: "Rewrite", ko: "다시 집필" },
+  revise: { zh: "修订", en: "Revise", ko: "수정" },
+  audit: { zh: "审计", en: "Audit", ko: "검토" },
+  auto: { zh: "自动连写", en: "Auto-write", ko: "자동 집필" },
 };
 
 export function formatNotifyCommandTitle(
@@ -188,10 +202,10 @@ export function formatNotifyCommandTitle(
   const label = localize(language, NOTIFY_ACTION_LABELS[action]);
   const book = bookName === undefined
     ? ""
-    : localize(language, { zh: `《${bookName}》`, en: `: ${bookName}` });
+    : localize(language, { zh: `《${bookName}》`, en: `: ${bookName}`, ko: `: ${bookName}` });
   return succeeded
-    ? localize(language, { zh: `✅ ${label}完成${book}`, en: `✅ ${label} complete${book}` })
-    : localize(language, { zh: `❌ ${label}失败${book}`, en: `❌ ${label} failed${book}` });
+    ? localize(language, { zh: `✅ ${label}完成${book}`, en: `✅ ${label} complete${book}`, ko: `✅ ${label} 완료${book}` })
+    : localize(language, { zh: `❌ ${label}失败${book}`, en: `❌ ${label} failed${book}`, ko: `❌ ${label} 실패${book}` });
 }
 
 export function formatNotifyBatchWriteBody(
@@ -208,13 +222,15 @@ export function formatNotifyBatchWriteBody(
   const lines = [
     localize(language, {
       zh: `本次完成 ${chapters.length} 章（第${first.chapterNumber}章到第${last.chapterNumber}章）`,
-      en: `${chapters.length} chapter(s) written (chapter ${first.chapterNumber} to ${last.chapterNumber})`,
+      ko: `${chapters.length}개 장 집필 완료 (제${first.chapterNumber}장 ~ 제${last.chapterNumber}장)`,
+    en: `${chapters.length} chapter(s) written (chapter ${first.chapterNumber} to ${last.chapterNumber})`,
     }),
     ...chapters.map((ch) => {
-      const lengthLabel = formatLengthCount(ch.wordCount, resolveLengthCountingMode(language));
+      const lengthLabel = formatLengthCount(ch.wordCount, resolveLengthCountingMode(language), language);
       return localize(language, {
         zh: `第${ch.chapterNumber}章 ${ch.title} | ${lengthLabel} | ${ch.observationCount} 条观察`,
-        en: `Chapter ${ch.chapterNumber} ${ch.title} | ${lengthLabel} | ${ch.observationCount} observation(s)`,
+        ko: `제${ch.chapterNumber}장 ${ch.title} | ${lengthLabel} | 소견 ${ch.observationCount}개`,
+    en: `Chapter ${ch.chapterNumber} ${ch.title} | ${lengthLabel} | ${ch.observationCount} observation(s)`,
       });
     }),
   ];
@@ -231,6 +247,7 @@ export function formatNotifyAuditBody(
 ): string {
   const head = localize(language, {
     zh: `第${result.chapterNumber}章审查完成（${result.issueCount} 条观察）`,
+    ko: `제${result.chapterNumber}장 검토 완료 (소견 ${result.issueCount}개)`,
     en: `Chapter ${result.chapterNumber} review completed (${result.issueCount} observation(s))`,
   });
   return result.summary ? `${head}\n${result.summary}` : head;
@@ -248,12 +265,14 @@ export function formatNotifyReviseBody(
   if (!result.changed) {
     return localize(language, {
       zh: `第${result.chapterNumber}章没有可执行修改`,
-      en: `Chapter ${result.chapterNumber} had no actionable change`,
+      ko: `제${result.chapterNumber}장에 실행할 수정이 없습니다`,
+    en: `Chapter ${result.chapterNumber} had no actionable change`,
     });
   }
-  const lengthLabel = formatLengthCount(result.wordCount, resolveLengthCountingMode(language));
+  const lengthLabel = formatLengthCount(result.wordCount, resolveLengthCountingMode(language), language);
   return localize(language, {
     zh: `第${result.chapterNumber}章已修订 | ${lengthLabel} | 复审观察 ${result.observationCount} 条`,
+    ko: `제${result.chapterNumber}장 수정 완료 | ${lengthLabel} | 소견 ${result.observationCount}개`,
     en: `Chapter ${result.chapterNumber} revised | ${lengthLabel} | ${result.observationCount} review observation(s)`,
   });
 }
@@ -262,6 +281,7 @@ export function formatNotifyFailureBody(language: CliLanguage, error: unknown): 
   const detail = error instanceof Error ? error.message : String(error);
   return localize(language, {
     zh: `错误：${detail}`,
+    ko: `오류: ${detail}`,
     en: `Error: ${detail}`,
   });
 }
@@ -273,6 +293,7 @@ export function formatImportChaptersDiscovery(
 ): string {
   return localize(language, {
     zh: `发现 ${chapterCount} 章，准备导入到「${bookId}」。`,
+    ko: `「${bookId}」에 가져올 ${chapterCount}개 장을 찾았습니다.`,
     en: `Found ${chapterCount} chapters to import into "${bookId}".`,
   });
 }
@@ -283,6 +304,7 @@ export function formatImportChaptersResume(
 ): string {
   return localize(language, {
     zh: `从第 ${resumeFrom} 章继续导入。`,
+    ko: `제${resumeFrom}장부터 계속 가져옵니다.`,
     en: `Resuming from chapter ${resumeFrom}.`,
   });
 }
@@ -291,28 +313,33 @@ export function formatImportChaptersComplete(
   language: CliLanguage,
   result: ImportResultShape,
 ): string[] {
-  const lengthLabel = formatLengthCount(result.totalWords, resolveLengthCountingMode(language));
+  const lengthLabel = formatLengthCount(result.totalWords, resolveLengthCountingMode(language), language);
   return [
     localize(language, {
       zh: "导入完成：",
-      en: "Import complete:",
+      ko: "가져오기 완료:",
+    en: "Import complete:",
     }),
     localize(language, {
       zh: `  已导入章节：${result.importedCount}`,
-      en: `  Chapters imported: ${result.importedCount}`,
+      ko: `  가져온 장 수: ${result.importedCount}`,
+    en: `  Chapters imported: ${result.importedCount}`,
     }),
     localize(language, {
       zh: `  总长度：${lengthLabel}`,
-      en: `  Total length: ${lengthLabel}`,
+      ko: `  전체 분량: ${lengthLabel}`,
+    en: `  Total length: ${lengthLabel}`,
     }),
     localize(language, {
       zh: `  下一章编号：${result.nextChapter}`,
-      en: `  Next chapter number: ${result.nextChapter}`,
+      ko: `  다음 장 번호: ${result.nextChapter}`,
+    en: `  Next chapter number: ${result.nextChapter}`,
     }),
     "",
     localize(language, {
       zh: `运行 "inkos write next ${result.continueBookId}" 继续写作。`,
-      en: `Run "inkos write next ${result.continueBookId}" to continue writing.`,
+      ko: `집필 계속: inkos write next ${result.continueBookId}`,
+    en: `Run "inkos write next ${result.continueBookId}" to continue writing.`,
     }),
   ];
 }
@@ -324,6 +351,7 @@ export function formatImportCanonStart(
 ): string {
   return localize(language, {
     zh: `把 "${parentBookId}" 的正典导入到 "${targetBookId}"...`,
+    ko: `「${parentBookId}」 설정을 「${targetBookId}」에 가져오는 중...`,
     en: `Importing canon from "${parentBookId}" into "${targetBookId}"...`,
   });
 }
@@ -332,11 +360,13 @@ export function formatImportCanonComplete(language: CliLanguage): string[] {
   return [
     localize(language, {
       zh: "正典已导入：story/parent_canon.md",
-      en: "Canon imported: story/parent_canon.md",
+      ko: "설정 가져오기 완료: story/parent_canon.md",
+    en: "Canon imported: story/parent_canon.md",
     }),
     localize(language, {
       zh: "Writer 和 auditor 会在番外模式下自动识别这个文件。",
-      en: "Writer and auditor will auto-detect this file for spinoff mode.",
+      ko: "외전 집필과 검토에서 이 파일을 자동으로 인식합니다.",
+    en: "Writer and auditor will auto-detect this file for spinoff mode.",
     }),
   ];
 }

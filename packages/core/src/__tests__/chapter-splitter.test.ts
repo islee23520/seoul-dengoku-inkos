@@ -1,7 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { splitChapters } from "../utils/chapter-splitter.js";
+import { readChapterHeading, splitChapters } from "../utils/chapter-splitter.js";
+import { chapterDocumentBody, renderChapterDocument } from "../utils/chapter-document.js";
 
 describe("splitChapters", () => {
+  it.each(["# 제12장 도착", "## 제 12 장: 도착", "제12장：도착"])("parses Korean heading %s", (heading) => {
+    expect(readChapterHeading(heading)).toEqual({ number: 12, title: "도착", language: "ko" });
+  });
+
+  it("renders Korean documents and removes consecutive aliases without losing prose", () => {
+    const prose = "본문.\n\n## 제2장 다음\n\n다음 본문.";
+    const wrapped = "# 第1章 이전\n\n## 제1장 초안\n\n" + prose;
+    const document = renderChapterDocument(1, "도착", wrapped, "ko");
+    expect(document.split("\n")[0]).toBe("# 제1장 도착");
+    expect(chapterDocumentBody(document, 1, "도착", "ko")).toBe(prose);
+    expect(renderChapterDocument(1, "도착", document, "ko")).toBe(document);
+    expect(splitChapters(document)).toEqual([
+      { title: "도착", content: "본문." },
+      { title: "다음", content: "다음 본문." },
+    ]);
+    expect(splitChapters("제1장\n\n본문.")).toEqual([{ title: "제1장", content: "본문." }]);
+  });
+
+  it.each([
+    { language: "zh" as const, heading: "# 第1章 Title" },
+    { language: "en" as const, heading: "# Chapter 1: Title" },
+  ])("preserves $language document syntax", ({ language, heading }) => {
+    expect(renderChapterDocument(1, "Title", "body", language)).toBe(heading + "\n\nbody");
+  });
+
   it("splits classical Chinese chapter headings with 第X回 by default", () => {
     const input = [
       "第一回：宴桃園豪傑三結義，斬黃巾英雄首立功",

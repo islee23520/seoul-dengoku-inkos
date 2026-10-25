@@ -30,7 +30,7 @@ export interface SettlementRetryParams {
   readonly originalValidation: ValidationResult;
   readonly authorityContext?: StateValidationAuthorityContext;
   readonly language: LengthLanguage;
-  readonly logWarn?: (message: { zh: string; en: string }) => void;
+  readonly logWarn?: (message: { zh: string; en: string; ko: string }) => void;
   readonly logger?: Pick<Logger, "warn">;
 }
 
@@ -53,6 +53,7 @@ export async function reconcileChapterStateAfterReview(
   params.logWarn?.({
     zh: `状态投影需要对账，正在仅重算第${params.chapterNumber}章结算层`,
     en: `State projection needs reconciliation; recalculating settlement for chapter ${params.chapterNumber}`,
+    ko: `상태 투영 대조: 제${params.chapterNumber}장 정산 재계산 중`,
   });
 
   const retryOutput = await params.writer.settleChapterState({
@@ -106,6 +107,7 @@ export async function reconcileChapterStateAfterReview(
     params.logWarn?.({
       zh: `状态校验重试后，第${params.chapterNumber}章仍有 ${retryValidation.observations.length} 条观察`,
       en: `State validation retry still reports ${retryValidation.observations.length} observation(s) for chapter ${params.chapterNumber}`,
+      ko: `상태 재검증: 제${params.chapterNumber}장에 소견 ${retryValidation.observations.length}개 남음`,
     });
     for (const observation of retryValidation.observations) {
       params.logger?.warn(`  [${observation.code}] ${observation.summary}`);

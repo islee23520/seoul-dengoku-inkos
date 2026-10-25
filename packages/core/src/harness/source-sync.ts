@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { DatabaseSync, backup } from "node:sqlite";
+import { DatabaseSync } from "node:sqlite";
 import { recordExecutionEvidence, updateExecutionWork } from "./execution-evidence.js";
 import { basename, extname, join, relative } from "node:path";
 import { toPosixPath } from "../utils/posix-path.js";
@@ -302,7 +302,9 @@ async function readArtifactBytes(path: string): Promise<Buffer> {
   try {
     db = new DatabaseSync(path, { readOnly: true });
     const snapshot = join(directory, "snapshot.db");
-    await backup(db, snapshot);
+    // Keep committed WAL contents in a standalone snapshot without crossing
+    // node:sqlite's asynchronous backup boundary in an isolated worker.
+    db.prepare("VACUUM INTO ?").run(snapshot);
     return await readFile(snapshot);
   } finally { db?.close(); await rm(directory, { recursive: true, force: true }); }
 }

@@ -57,10 +57,10 @@ forecastCommand
         }, null, 2));
         return;
       }
-      log(`Forecast created: ${result.forecast.forecastId} (base chapter ${result.forecast.baseChapter})`);
+      log(result.forecast.language === "ko" ? `전개 생성 완료: ${result.forecast.forecastId} (기준 ${result.forecast.baseChapter}장)` : `Forecast created: ${result.forecast.forecastId} (base chapter ${result.forecast.baseChapter})`);
       for (const line of formatBranchLines(result.forecast)) log(line);
-      log(`Comparison: ${result.comparisonPath}`);
-      log(`Select a branch with: inkos forecast select ${bookId} ${result.forecast.forecastId} <branch-id>`);
+      log(result.forecast.language === "ko" ? `비교 문서: ${result.comparisonPath}` : `Comparison: ${result.comparisonPath}`);
+      log(result.forecast.language === "ko" ? `분기 선택: inkos forecast select ${bookId} ${result.forecast.forecastId} <branch-id>` : `Select a branch with: inkos forecast select ${bookId} ${result.forecast.forecastId} <branch-id>`);
     } catch (e) {
       failForecastCommand("Forecast create failed", e, opts.json);
     }
@@ -88,14 +88,14 @@ forecastCommand
         }, null, 2));
         return;
       }
-      log(`Forecast ${result.forecast.forecastId} — status: ${result.stale ? "stale" : result.forecast.status}`);
-      log(`Divergence: ${result.forecast.divergence}`);
-      log(`Base chapter: ${result.forecast.baseChapter}, horizon: ~${result.forecast.horizon} chapters`);
+      log(result.forecast.language === "ko" ? `전개 ${result.forecast.forecastId} — 상태: ${result.stale ? "만료" : "활성"}` : `Forecast ${result.forecast.forecastId} — status: ${result.stale ? "stale" : result.forecast.status}`);
+      log(result.forecast.language === "ko" ? `분기점: ${result.forecast.divergence}` : `Divergence: ${result.forecast.divergence}`);
+      log(result.forecast.language === "ko" ? `기준 장: ${result.forecast.baseChapter}, 전개 폭: 약 ${result.forecast.horizon}장` : `Base chapter: ${result.forecast.baseChapter}, horizon: ~${result.forecast.horizon} chapters`);
       if (result.stale) {
-        log("WARNING: canon changed after this forecast was generated; regenerate before relying on it.");
+        log(result.forecast.language === "ko" ? "주의: 전개 생성 뒤 정사가 변경되었습니다. 사용 전에 다시 생성하세요." : "WARNING: canon changed after this forecast was generated; regenerate before relying on it.");
       }
       for (const line of formatBranchLines(result.forecast)) log(line);
-      log(`Comparison: ${result.comparisonPath}`);
+      log(result.forecast.language === "ko" ? `비교 문서: ${result.comparisonPath}` : `Comparison: ${result.comparisonPath}`);
     } catch (e) {
       failForecastCommand("Forecast show failed", e, opts.json);
     }
@@ -124,12 +124,12 @@ forecastCommand
         }, null, 2));
         return;
       }
-      log(`Selected ${result.branch.branchId} "${result.branch.title}" from ${result.forecast.forecastId}.`);
+      log(result.forecast.language === "ko" ? `${result.forecast.forecastId}에서 ${result.branch.branchId} "${result.branch.title}" 선택 완료.` : `Selected ${result.branch.branchId} "${result.branch.title}" from ${result.forecast.forecastId}.`);
       if (result.stale) {
-        log("WARNING: this forecast is stale; the plan includes a stale warning.");
+        log(result.forecast.language === "ko" ? "주의: 만료된 전개입니다. 계획에 만료 경고를 포함했습니다." : "WARNING: this forecast is stale; the plan includes a stale warning.");
       }
-      log(`Plan: ${result.planPath}`);
-      log("Canonical files were not modified. Applying the plan to the outline is a separate, explicit step.");
+      log(result.forecast.language === "ko" ? `계획: ${result.planPath}` : `Plan: ${result.planPath}`);
+      log(result.forecast.language === "ko" ? "정사 파일은 변경하지 않았습니다. 개요에 적용하려면 별도 작업이 필요합니다." : "Canonical files were not modified. Applying the plan to the outline is a separate, explicit step.");
     } catch (e) {
       failForecastCommand("Forecast select failed", e, opts.json);
     }
@@ -169,7 +169,7 @@ export function parseForecastSelectArgs(args: ReadonlyArray<string>): {
 
 function formatBranchLines(forecast: NarrativeForecast): string[] {
   return forecast.branches.map((branch) =>
-    `- ${branch.branchId} "${branch.title}" — ${branch.risks.length} risk(s)`);
+    forecast.language === "ko" ? `- ${branch.branchId} "${branch.title}" — 위험 ${branch.risks.length}개` : `- ${branch.branchId} "${branch.title}" — ${branch.risks.length} risk(s)`);
 }
 
 function parsePositiveInteger(

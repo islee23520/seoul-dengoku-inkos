@@ -8,13 +8,14 @@ import {
   type PlayActionIntent,
   type PlayMutation,
 } from "../models/play.js";
+import type { Language } from "../models/language.js";
 
 export interface PlayOpeningStateInput {
   readonly turn: number;
   readonly sceneText: string;
   readonly suggestedActions: readonly string[];
   readonly context: string;
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
   readonly worldPremise?: string;
 }
 
@@ -27,7 +28,7 @@ export interface PlayTurnInput {
   readonly context: string;
   readonly replayContext?: string;
   readonly mode: "open" | "guided";
-  readonly language?: "zh" | "en";
+  readonly language?: Language;
   readonly worldPremise?: string;
 }
 
@@ -311,7 +312,7 @@ function hasMutationResult(mutation: PlayMutation): boolean {
     || mutation.notes.length > 0;
 }
 
-function buildOpeningStateSystemPrompt(language: "zh" | "en"): string {
+function buildOpeningStateSystemPrompt(language: Language): string {
   return language === "en"
     ? [
         "Extract the authoritative world state already established by the supplied opening scene and world contract.",
@@ -327,7 +328,7 @@ function buildOpeningStateSystemPrompt(language: "zh" | "en"): string {
       ].join("\n");
 }
 
-function buildOpeningStateUserPrompt(input: PlayOpeningStateInput, language: "zh" | "en"): string {
+function buildOpeningStateUserPrompt(input: PlayOpeningStateInput, language: Language): string {
   const premise = input.worldPremise?.trim();
   return language === "en"
     ? [
@@ -352,7 +353,7 @@ function buildOpeningStateUserPrompt(input: PlayOpeningStateInput, language: "zh
       ].join("\n");
 }
 
-function buildTurnSystemPrompt(mode: "open" | "guided", language: "zh" | "en"): string {
+function buildTurnSystemPrompt(mode: "open" | "guided", language: Language): string {
   const choiceRule = language === "en"
     ? mode === "open"
       ? "The open-world surface has no suggestedActions; submit an empty array."
@@ -385,7 +386,7 @@ function buildTurnSystemPrompt(mode: "open" | "guided", language: "zh" | "en"): 
       ].join("\n");
 }
 
-function buildTurnUserPrompt(input: PlayTurnInput, language: "zh" | "en"): string {
+function buildTurnUserPrompt(input: PlayTurnInput, language: Language): string {
   const premise = input.worldPremise?.trim();
   return language === "en"
     ? [

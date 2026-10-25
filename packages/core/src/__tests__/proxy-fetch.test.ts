@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const proxyAgentMock = vi.fn((url: string) => ({ kind: "proxy-agent", url }));
+const proxyAgentMock = vi.fn(function (url: string) { return { kind: "proxy-agent", url }; });
 
 vi.mock("undici", () => ({
   ProxyAgent: proxyAgentMock,

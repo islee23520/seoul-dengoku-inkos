@@ -68,7 +68,8 @@
     "@types/react": "^19.2.14",
     "ink-testing-library": "^4.0.0",
     "typescript": "^5.8.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.12",
+    "vite": "^6.4.5"
   },
   "overrides": {
     "@mariozechner/pi-ai": "0.67.1",

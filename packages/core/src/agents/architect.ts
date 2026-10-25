@@ -8,6 +8,7 @@ import { FoundationDetailsToolSchema, FoundationOutlineToolSchema, FoundationCas
 import type { HookRecord } from "../models/runtime-state.js";
 import { createInitialRuntimeState } from "../state/runtime-state-store.js";
 import { commitAtomicFileSet, type AtomicFileWrite } from "../utils/atomic-file-set.js";
+import type { Language } from "../models/language.js";
 
 // Architect owns the five-section persistence protocol. Foundation craft is
 // supplied by the active long-writing and derivative-work Skills.
@@ -60,6 +61,7 @@ export class ArchitectAgent extends BaseAgent {
 
     const systemPrompt = resolvedLanguage === "en"
       ? this.buildEnglishFoundationPrompt(book, contextBlock, reviewFeedbackBlock)
+      : resolvedLanguage === "ko" ? this.buildFoundationProtocol({ book, contextBlock, reviewFeedbackBlock, language: "ko" })
       : this.buildChineseFoundationPrompt(book, contextBlock, reviewFeedbackBlock);
 
     const langPrefix = resolvedLanguage === "en"
@@ -67,6 +69,7 @@ export class ArchitectAgent extends BaseAgent {
       : "";
     const userMessage = resolvedLanguage === "en"
       ? `Generate the complete foundation for the ${book.genre} Work titled "${book.title}". Write everything in English.`
+      : resolvedLanguage === "ko" ? `제목이 「${book.title}」인 ${book.genre} 작품의 기초 설정을 한국어로 작성하세요.`
       : `请为标题为"${book.title}"的${book.genre}作品生成完整基础设定。`;
 
     return this.generateFoundationInStages({
@@ -129,9 +132,10 @@ ${reviseFrom.userFeedback || "（无）"}
     readonly book: BookConfig;
     readonly contextBlock: string;
     readonly reviewFeedbackBlock: string;
-    readonly language: "zh" | "en";
+    readonly language: Language;
   }): string {
     const { book, contextBlock, reviewFeedbackBlock, language } = params;
+    if (language === "ko") return `활성 집필 지침과 제공된 원문에 따라 작품 기초 설정을 작성합니다.${contextBlock}${reviewFeedbackBlock}\n\n## 작품 정보\n플랫폼: ${book.platform}\n장르: ${book.genre}\n목표 장 수: ${book.targetChapters}\n장 분량: ${book.chapterWordCount}자\n제목: ${book.title}\n\n모든 문서의 제목, 소제목, 본문과 구조화된 규칙의 사람이 읽는 값은 한국어로 작성합니다. 영어 병기나 괄호 번역을 넣지 않습니다. 규칙 문서에는 정보 경계, 상태 변화, 인물 관계, 금지 사항처럼 한국어 소제목을 사용합니다. 도구 필드 이름, 식별자, 열거 값은 스키마 그대로 유지합니다. 영어로 된 전문 지침과 스키마 설명은 방법과 구조를 안내할 뿐 출력 언어가 아닙니다. 지정된 도구로 설정 문서와 규칙 데이터를 제출합니다.`;
     const metadata = language === "en"
       ? `Platform: ${book.platform}\nGenre: ${book.genre}\nTarget chapters: ${book.targetChapters}\nChapter length: ${book.chapterWordCount}\nTitle: ${book.title}`
       : `平台：${book.platform}\n题材：${book.genre}\n目标章数：${book.targetChapters}\n每章字数：${book.chapterWordCount}\n标题：${book.title}`;
@@ -142,7 +146,7 @@ ${reviseFrom.userFeedback || "（无）"}
   async writeFoundationFiles(
     bookDir: string,
     output: ArchitectOutput,
-    language: "zh" | "en",
+    language: Language,
     mode: "init" | "revise" = "init",
   ): Promise<void> {
     const writes: AtomicFileWrite[] = [
@@ -262,7 +266,7 @@ ${reviseFrom.userFeedback || "（无）"}
   private async generateFoundationInStages(input: {
     readonly systemPrompt: string;
     readonly userMessage: string;
-    readonly language: "zh" | "en";
+    readonly language: Language;
     readonly temperature: number;
     readonly onOutline?: (outline: { readonly storyFrame: string; readonly volumeMap: string }) => void | Promise<void>;
   }): Promise<ArchitectOutput> {
@@ -344,7 +348,7 @@ ${reviseFrom.userFeedback || "（无）"}
   }
   private buildReviewFeedbackBlock(
     reviewFeedback: string | undefined,
-    language: "zh" | "en",
+    language: Language,
   ): string {
     const trimmed = reviewFeedback?.trim();
     if (!trimmed) return "";
