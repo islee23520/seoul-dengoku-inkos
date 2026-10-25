@@ -156,6 +156,9 @@ export async function selectNarrativeBranch(
   }
 
   const stale = await isForecastStale(bookDir, bookId, forecast);
+  if (process.env.INKOS_STRICT_STALE_REJECT === "1" && stale) {
+    throw new Error(`Narrative forecast "${forecast.forecastId}" is stale. Regenerate it before selecting a branch.`);
+  }
   const planPath = await store.writeSelectedPlan(
     forecast.forecastId,
     renderSelectedBranchPlanMarkdown({
