@@ -50,6 +50,7 @@ import {
   buildExportArtifact,
   ChapterExportSourceError,
   DetectionConfigSchema,
+  RuntimeStateLanguageSchema,
   ResearchSearchConfigSchema,
   GLOBAL_ENV_PATH,
   COVER_PROVIDER_PRESETS,
@@ -4107,6 +4108,10 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
 
   app.put("/api/v1/project", async (c) => {
     const updates = await c.req.json<Record<string, unknown>>();
+    const language = updates.language === undefined ? undefined : RuntimeStateLanguageSchema.safeParse(updates.language);
+    if (language && !language.success) {
+      return c.json({ error: language.error.issues.map((issue) => issue.message).join("; ") }, 400);
+    }
     const configPath = join(root, "inkos.json");
     try {
       const raw = await readFile(configPath, "utf-8");
@@ -4118,8 +4123,8 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       if (updates.stream !== undefined) {
         existing.llm.stream = updates.stream;
       }
-      if (updates.language === "zh" || updates.language === "en") {
-        existing.language = updates.language;
+      if (language?.success) {
+        existing.language = language.data;
       }
       const { writeFile: writeFileFs } = await import("node:fs/promises");
       await writeFileFs(configPath, JSON.stringify(existing, null, 2), "utf-8");
@@ -5524,7 +5529,12 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
   // --- Language setup ---
 
   app.post("/api/v1/project/language", async (c) => {
-    const { language } = await c.req.json<{ language: "zh" | "en" }>();
+    const body = await c.req.json<{ language?: unknown }>();
+    const parsed = RuntimeStateLanguageSchema.safeParse(body.language);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.issues.map((issue) => issue.message).join("; ") }, 400);
+    }
+    const language = parsed.data;
     const configPath = join(root, "inkos.json");
     try {
       const raw = await readFile(configPath, "utf-8");
@@ -5814,7 +5824,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         ...(updates.chapterWordCount !== undefined ? { chapterWordCount: Number(updates.chapterWordCount) } : {}),
         ...(updates.targetChapters !== undefined ? { targetChapters: Number(updates.targetChapters) } : {}),
         ...(updates.status !== undefined ? { status: updates.status as typeof book.status } : {}),
-        ...(updates.language !== undefined ? { language: updates.language as "zh" | "en" } : {}),
+        ...(updates.language !== undefined ? { language: RuntimeStateLanguageSchema.parse(updates.language) } : {}),
         updatedAt: new Date().toISOString(),
       };
       await state.saveBookConfig(id, updated);
@@ -6088,7 +6098,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       targetChapters: body.targetChapters ?? 100,
       chapterWordCount: body.chapterWordCount ?? 3000,
       fanficMode: body.mode?.trim() || "canon",
-      ...(body.language ? { language: body.language as "zh" | "en" } : {}),
+      ...(body.language ? { language: RuntimeStateLanguageSchema.parse(body.language) } : {}),
       createdAt: now,
       updatedAt: now,
     };
@@ -6154,7 +6164,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
     } catch {
       return c.json({ error: `Parent book "${body.parentBookId}" not found` }, 404);
     }
-    const language = (body.language ?? parent.language) as "zh" | "en" | undefined;
+    const language = body.language ?? parent.language;
     const now = new Date().toISOString();
     const bookConfig = buildStudioBookConfig({
       title: body.title,
@@ -6226,7 +6236,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       platform: body.platform,
       targetChapters: body.targetChapters,
       chapterWordCount: body.chapterWordCount,
-      ...(body.language ? { language: body.language as "zh" | "en" } : {}),
+      ...(body.language ? { language: body.language } : {}),
     }, now);
     const bookId = bookConfig.id;
     if (!bookId) {
