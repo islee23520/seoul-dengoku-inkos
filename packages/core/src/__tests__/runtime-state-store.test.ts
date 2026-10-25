@@ -72,6 +72,18 @@ describe("runtime state mini-flow", () => {
     });
   });
 
+  it("round-trips Korean state through canonical JSON while rendering Korean headings", async () => {
+    const bookDir = await tempBook();
+    const snapshot = await createInitialRuntimeState({ bookDir, language: "ko", hooks: [{ hookId: "편지", startChapter: 0, type: "비밀", status: "resolved", lastAdvancedChapter: 0, expectedPayoff: "발신인 확인", notes: "확인 완료" }] });
+    expect(await loadRuntimeStateSnapshot(bookDir)).toEqual(snapshot);
+    const hooks = await readFile(join(bookDir, "story/pending_hooks.md"), "utf8");
+    expect(hooks).toContain("# 복선 목록");
+    expect(hooks).toContain("회수 완료");
+    expect(hooks).not.toMatch(/resolved|[\u4e00-\u9fff]/);
+    expect(await readFile(join(bookDir, "story/current_state.md"), "utf8")).toContain("# 현재 상태");
+    expect(await readFile(join(bookDir, "story/chapter_summaries.md"), "utf8")).toContain("# 장별 요약");
+  });
+
   it("fails loudly when a canonical state artifact is corrupt", async () => {
     const bookDir = await tempBook();
     await createInitialRuntimeState({ bookDir, language: "zh" });

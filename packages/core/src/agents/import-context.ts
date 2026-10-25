@@ -61,16 +61,16 @@ export async function compileImportSource(input: {
     });
     const body = response.content.trim();
     if (!body) throw new Error(`Import context compiler returned empty output for chunk ${index + 1}/${chunks.length}.`);
-    compiled.push(`## ${input.language === "en" ? "Compiled source chunk" : "编译源片段"} ${index + 1}/${chunks.length}\n\n${body}`);
+    compiled.push(`## ${input.language === "en" ? "Compiled source chunk" : input.language === "ko" ? "편집된 원본 구간" : "编译源片段"} ${index + 1}/${chunks.length}\n\n${body}`);
   }
   const catalog = input.chapters.map((chapter, index) => input.language === "en"
     ? `- Chapter ${index + 1}: ${chapter.title}`
-    : `- 第${index + 1}章：${chapter.title}`).join("\n");
+    : input.language === "ko" ? `- 제${index + 1}장: ${chapter.title}` : `- 第${index + 1}章：${chapter.title}`).join("\n");
   return {
     markdown: [
-      input.language === "en" ? "# Compiled import context" : "# 编译后的导入上下文",
+      input.language === "en" ? "# Compiled import context" : input.language === "ko" ? "# 가져오기 맥락" : "# 编译后的导入上下文",
       "",
-      input.language === "en" ? "## Complete chapter catalog" : "## 完整章节目录",
+      input.language === "en" ? "## Complete chapter catalog" : input.language === "ko" ? "## 전체 장 목록" : "## 完整章节目录",
       catalog,
       "",
       ...compiled,

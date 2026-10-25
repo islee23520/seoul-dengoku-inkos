@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { splitChapters } from "../utils/chapter-splitter.js";
+import { renderShortFictionDraftMarkdown, renderShortFictionSalesPackage } from "../agents/short-fiction.js";
+import { describe, expect, it, vi } from "vitest";
+import { ShortFictionOutlineAgent } from "../agents/short-fiction.js";
 import { renderForecastComparisonMarkdown, renderSelectedBranchPlanMarkdown } from "../forecast/render.js";
 import type { NarrativeForecast } from "../forecast/schema.js";
 import { getPlannerMemoSystemPrompt, buildPlannerUserMessage } from "../agents/planner-prompts.js";
@@ -25,7 +28,7 @@ function makeKoreanForecast(): NarrativeForecast {
         beats: [{ chapter: 11, summary: "고향역에 내린다." }],
         characterDecisions: [{ character: "주인공", decision: "남기로 한다." }],
         projectedChanges: { characters: ["주인공"], relationships: [], world: [], hooks: ["옛 편지"] },
-        risks: [{ kind: "timeline", description: "시간표가 10장과 충돌한다." }],
+        risks: [{ kind: "timeline", description: "시간표가 10장과 충돌한다." }, { kind: "pacing", description: "너무 빠르다." }, { kind: "causality", description: "동기가 부족하다." }],
         uncertainties: ["고향 배경 미정"],
         intentRationale: "작가 의도와 대체로 일치한다.",
       },
@@ -34,6 +37,23 @@ function makeKoreanForecast(): NarrativeForecast {
 }
 
 describe("Korean rendering branches", () => {
+  it("renders structured outline chapter headings in Korean", async () => {
+    const agent = new ShortFictionOutlineAgent({ client: { defaults: { maxTokens: 4096 } }, model: "fixture", projectRoot: "/tmp" } as never);
+    const submit = vi.spyOn(agent as never as { submitStructured: (...args: unknown[]) => Promise<unknown> }, "submitStructured").mockResolvedValue({ result: { storyTitle: "편지", planMarkdown: "편지가 도착한다.", chapter_1_plan: "봉투를 연다." } });
+    try {
+      const outline = await agent.createOutline({ direction: "편지", chapterCount: 1, charsPerChapter: 1000, language: "ko" });
+      expect(splitChapters(outline.rawContent)).toEqual([{ title: "제1장", content: "봉투를 연다." }]);
+      expect(outline.rawContent).not.toMatch(/[\u4e00-\u9fff]/);
+    } finally { submit.mockRestore(); }
+  });
+  it("renders short-fiction publication headings without Chinese fallback", () => {
+    const manuscript = renderShortFictionDraftMarkdown({ storyTitle: "편지", openingHook: "누군가 문을 두드렸다.", rawContent: "", chapters: [{ number: 1, title: "도착", content: "편지가 왔다.", charCount: 6 }] }, "ko");
+    const sales = renderShortFictionSalesPackage({ title: "편지", intro: "오래된 편지", sellingPoints: ["반전"], coverPrompt: "표지 그림", rawContent: "" }, "ko");
+    expect(manuscript).toContain("## 도입 장면");
+    expect(splitChapters(manuscript)).toEqual([{ title: "도착", content: "편지가 왔다." }]);
+    expect(sales).toContain("## 줄거리 소개");
+    expect(manuscript + sales).not.toMatch(/[\u4e00-\u9fff]/);
+  });
   it("renders the forecast comparison document in Korean", () => {
     const markdown = renderForecastComparisonMarkdown(makeKoreanForecast());
     expect(markdown).toContain("# 서사 전개 비교: 주인공이 도시를 떠난다");
@@ -42,6 +62,8 @@ describe("Korean rendering branches", () => {
     expect(markdown).toContain("## 정합성 위험");
     expect(markdown).toContain("## 미래 장 개요");
     expect(markdown).toContain("제 11장: 고향역에 내린다.");
+    expect(markdown).not.toMatch(/\[(timeline|pacing|causality)\]/);
+    expect(markdown).toContain("[인과관계]");
   });
 
   it("renders the selected branch plan document in Korean", () => {

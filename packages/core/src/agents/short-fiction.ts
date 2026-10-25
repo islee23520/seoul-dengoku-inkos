@@ -88,6 +88,7 @@ export interface ShortFictionSalesPackage {
 export function renderShortFictionSalesPackage(sales: ShortFictionSalesPackage, language: ShortFictionLanguage): string {
   const headings = language === "en"
     ? ["## Synopsis", "## Selling Points", "## Cover Prompt"]
+    : language === "ko" ? ["## 줄거리 소개", "## 판매 포인트", "## 표지 프롬프트"]
     : ["## 简介", "## 卖点", "## 封面提示词"];
   return [`# ${sales.title}`, "", headings[0], "", sales.intro, "", headings[1], "",
     ...sales.sellingPoints.map(point => `- ${point}`), "", headings[2], "", sales.coverPrompt].join("\n");
@@ -169,7 +170,7 @@ export class ShortFictionOutlineAgent extends BaseAgent {
     return {
       storyTitle: response.result.storyTitle.trim(),
       rawContent: [response.result.planMarkdown.trim(), ...Array.from({length:input.chapterCount},(_,index) => (
-        `## ${input.language === "en" ? `Chapter ${index+1}` : `第${index+1}章`}\n\n${(response.result as Record<string,string>)[`chapter_${index+1}_plan`]!.trim()}`
+        `## ${input.language === "en" ? `Chapter ${index+1}` : input.language === "ko" ? `제${index+1}장` : `第${index+1}章`}\n\n${(response.result as Record<string,string>)[`chapter_${index+1}_plan`]!.trim()}`
       ))].join("\n\n"),
     };
   }
@@ -636,7 +637,7 @@ export function renderShortFictionDraftMarkdown(
   draft: ShortFictionBatchDraft,
   language: ShortFictionLanguage = "zh",
 ): string {
-  const hookHeading = language === "en" ? "## Opening Hook" : "## 开篇钩子";
+  const hookHeading = language === "en" ? "## Opening Hook" : language === "ko" ? "## 도입 장면" : "## 开篇钩子";
   const completedChapters = draft.chapters.filter((chapter) => chapter.title.trim() && chapter.content.trim());
   return [
     `# ${draft.storyTitle}`,

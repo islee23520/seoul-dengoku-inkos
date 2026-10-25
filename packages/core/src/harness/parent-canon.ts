@@ -30,7 +30,7 @@ export async function readPinnedParentCanon(projectRoot:string,targetWorkId:stri
     const source=await readArtifactRevision({projectRoot,workId:parentWorkId,artifactId:artifact.id,revisionId:revision.id});
     return {path:revision.path,text:source.bytes.toString('utf8'),lineage:{relation:'derived-from',sourceWorkId:parentWorkId,sourceArtifactId:artifact.id,sourceRevisionId:revision.id} satisfies WorkLineage};
   }));
-  return {canon:[`# ${parent.language==='en'?'Parent canon':'正传正典'} — ${parent.title}`,...sources.filter(s=>!s.path.endsWith('/style_guide.md')).map(s=>`## ${s.path}\n\n${s.text}`)].join('\n\n'),
+  return {canon:[`# ${parent.language==='en'?'Parent canon':parent.language==='ko'?'본편 설정':'正传正典'} — ${parent.title}`,...sources.filter(s=>!s.path.endsWith('/style_guide.md')).map(s=>`## ${s.path}\n\n${s.text}`)].join('\n\n'),
     styleGuide:sources.find(s=>s.path.endsWith('/style_guide.md'))?.text,
     lineage:[...target.lineage.filter(s=>s.sourceWorkId!==parentWorkId),...sources.map(s=>s.lineage)]};
 }

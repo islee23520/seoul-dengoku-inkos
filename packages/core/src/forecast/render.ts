@@ -222,11 +222,11 @@ function renderBranchSection(
     `- ${labels.characters}${pairSeparator}${joinOrNone(branch.projectedChanges.characters, labels.none, joiner)}`,
     `- ${labels.relationships}${pairSeparator}${joinOrNone(branch.projectedChanges.relationships, labels.none, joiner)}`,
     `- ${labels.world}${pairSeparator}${joinOrNone(branch.projectedChanges.world, labels.none, joiner)}`,
-    `- ${labels.hooks}${pairSeparator}${joinOrNone(branch.projectedChanges.hooks, labels.none, joiner)}`,
+    `- ${labels.hooks}${pairSeparator}${joinOrNone(language === "ko" ? branch.projectedChanges.hooks.map(hook => hook.replace(/\bresolved\b/g, "회수 완료")) : branch.projectedChanges.hooks, labels.none, joiner)}`,
     "",
     `${sub} ${labels.risks}`,
     "",
-    list(branch.risks.map((risk) => `[${risk.kind}] ${risk.description}`)),
+    list(branch.risks.map((risk) => `[${language === "ko" ? koreanRiskLabel(risk.kind) : risk.kind}] ${risk.description}`)),
     "",
     `${sub} ${labels.uncertainties}`,
     "",
@@ -240,6 +240,11 @@ function renderBranchSection(
 
 function joinOrNone(items: ReadonlyArray<string>, none: string, joiner: string): string {
   return items.length > 0 ? items.join(joiner) : none;
+}
+
+function koreanRiskLabel(kind: string): string {
+  const labels: Record<string, string> = { pacing: "전개 속도", causality: "인과관계", timeline: "시간 순서", character: "인물", continuity: "연속성", world: "세계 설정", hook: "복선", logic: "논리", relationship: "관계" };
+  return labels[kind] ?? "기타 위험";
 }
 
 function escapeCell(value: string): string {
