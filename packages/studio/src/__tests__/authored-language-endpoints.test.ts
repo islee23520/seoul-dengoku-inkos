@@ -29,6 +29,15 @@ describe("Studio authored-language endpoints", () => {
   });
   afterEach(async () => { await rm(root, { recursive: true, force: true }); });
 
+  it("persists Korean during first setup when language is absent", async () => {
+    const config = JSON.parse(await readFile(join(root, "inkos.json"), "utf8"));
+    delete config.language;
+    await writeFile(join(root, "inkos.json"), JSON.stringify(config));
+    const response = await createStudioServer({} as never, root).request("/api/v1/project/language", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language: "ko" }) });
+    expect(response.status).toBe(200);
+    expect(JSON.parse(await readFile(join(root, "inkos.json"), "utf8")).language).toBe("ko");
+  });
+
   it.each(["zh", "en", "ko"])("persists %s through both project language routes", async (language) => {
     const app = createStudioServer({} as never, root);
     for (const [method, path] of [["PUT", "/api/v1/project"], ["POST", "/api/v1/project/language"]]) {
