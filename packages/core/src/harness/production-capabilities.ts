@@ -207,7 +207,7 @@ export function createProductionCapabilityRegistry(
     attachmentPaths: environment.attachmentPaths,
   }) : undefined;
   const workspaceTools: ProductionToolAction[] = [
-    ...createProfileWorkTools(environment.projectRoot, registry).map(tool => tool.name === "list_work_profiles" ? readAction(tool) : writeAction(tool)),
+    ...createProfileWorkTools(environment.projectRoot, registry, lang).map(tool => tool.name === "list_work_profiles" ? readAction(tool) : writeAction(tool)),
     ...(proposalTool ? [readAction(proposalTool)] : []),
     readAction(createReadTool(environment.projectRoot, {
       scope: "project",

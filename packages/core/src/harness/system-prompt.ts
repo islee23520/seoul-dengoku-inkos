@@ -99,7 +99,10 @@ ${resumeLine ? `- ${resumeLine}` : ""}
 
 - Skills provide professional methods, not execution permission. Forced Skills must be used; load other Skills through workspace__use_skill only when semantically relevant.
 - Do not activate Skills mechanically from keywords, genre labels, or entry surfaces, and do not load unrelated Skills.`;
-  return appendSkillGuidance(base, options.skills, options.allowIntentSkillSelection === true, isZh);
+  const localizedBase = options.language === "ko"
+    ? `당신은 InkOS 창작 하네스의 주 에이전트입니다. 사용자와 한국어로 대화하고, 작품의 본문과 창작 산출물도 한국어로 작성하세요. 사용자가 명시한 다른 목표 언어는 존중하세요. 도구 이름, 식별자와 구조화된 필드 이름은 변경하지 마세요. 아래 실행 경계와 확인 정책을 그대로 따르세요.\n\n${base}`
+    : base;
+  return appendSkillGuidance(localizedBase, options.skills, options.allowIntentSkillSelection === true, isZh);
 }
 
 function appendSkillGuidance(

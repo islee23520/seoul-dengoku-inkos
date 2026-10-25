@@ -12,7 +12,7 @@ import type { AtomicFileWrite } from "../../utils/atomic-file-set.js";
 const CreateParameters = Type.Object({ workId: Type.String(), profileId: Type.String(), title: Type.String({ minLength: 1 }), intent: Type.String({ minLength: 1 }), language: Type.Optional(Type.String()),
   source: Type.Optional(Type.Object({workId:Type.String(),artifactId:Type.String(),revisionId:Type.Optional(Type.String())},{additionalProperties:false,description:"For adaptation or derivation, pass the verified source text artifact from read/inspect_work here. The host preserves that exact revision for production and review; do not summarize or copy its text into intent."})),
 });
-export function createProfileWorkTools(root: string, capabilities: CapabilityRegistry): AgentTool<any>[] {
+export function createProfileWorkTools(root: string, capabilities: CapabilityRegistry, language = "zh"): AgentTool<any>[] {
   return [
     { name: "list_work_profiles", label: "List creative profiles", description: "List installed creative profiles and the methods and actions they compose.", parameters: Type.Object({}),
       execute: async () => ({ content: [{ type: "text", text: JSON.stringify(createBuiltInWorkProfileRegistry(root).list()) }], details: { kind: "work_profiles" } }),
@@ -32,7 +32,7 @@ export function createProfileWorkTools(root: string, capabilities: CapabilityReg
             writes.push({relativePath:`works/${params.workId}/source/source-material.md`,content:source.bytes});
             lineage.push({relation:'derived-from',sourceWorkId:source.work.id,sourceArtifactId:source.artifact.id,sourceRevisionId:source.revision.id});
           }
-          const initial = createInitialWorkManifestWrite({ workId: params.workId, title: params.title, profileId: profile.id, language: params.language ?? "zh", writes, metadata: { intent: params.intent }, lineage });
+          const initial = createInitialWorkManifestWrite({ workId: params.workId, title: params.title, profileId: profile.id, language: params.language ?? language, writes, metadata: { intent: params.intent }, lineage });
           await commitAtomicFileSet({ rootDir: root, writes: [...writes, initial.write] });
           return { content: [{ type: "text", text: `Created ${params.title} with profile ${profile.id}.` }], details: { kind: "work_created", workId: params.workId, profileId: profile.id, lineage } };
         });

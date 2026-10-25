@@ -79,6 +79,15 @@ describe("tui agent session bridge", () => {
     await rm(projectRoot, { recursive: true, force: true });
   });
 
+  it.each(["zh", "en", "ko"])("passes %s authored language to the agent session", async (language) => {
+    const config = await loadConfigMock();
+    loadConfigMock.mockResolvedValue({ ...config, language });
+    runAgentSessionMock.mockResolvedValue({ responseText: "Reply", messages: [] });
+    const { processTuiAgentInput } = await import("../tui/agent-input.js");
+    await processTuiAgentInput({ projectRoot, input: "Continue", session: createProjectSession(projectRoot) });
+    expect(runAgentSessionMock).toHaveBeenCalledWith(expect.objectContaining({ language }), "Continue");
+  });
+
   it("runs agent chat and persists raw assistant output into the tui session", async () => {
     runAgentSessionMock.mockResolvedValue({
       responseText: "这是 agent 直接返回的回复。",
