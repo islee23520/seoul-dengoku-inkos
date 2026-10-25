@@ -8,6 +8,17 @@ import {
 } from "./BookCreate";
 
 describe("book creation miniflow", () => {
+  it.each([
+    ["zh", "tomato", 3000],
+    ["en", "royal-road", 2000],
+    ["ko", "other", 4000],
+  ] as const)("preserves %s authored language and defaults in the payload", (language, platform, chapterWordCount) => {
+    const payload = buildBookCreatePayload({
+      ...defaultBookCreateForm(language), title: "Fixture", genre: "other", brief: "Premise",
+    }, language);
+    expect(payload).toMatchObject({ language, platform, chapterWordCount });
+  });
+
   it("preserves explicit Work metadata in the typed create payload", () => {
     const form = {
       ...defaultBookCreateForm("en"),

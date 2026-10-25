@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookPlus, CheckCircle2 } from "lucide-react";
 import { fetchJson, useApi } from "../hooks/use-api";
 import type { Theme } from "../hooks/use-theme";
 import type { TFunction } from "../hooks/use-i18n";
 import { useColors } from "../hooks/use-colors";
+import { normalizeStudioLanguage, normalizeWorkLanguage, type WorkLanguage } from "../api/language";
 
 interface Nav {
   toDashboard: () => void;
@@ -28,7 +29,7 @@ export interface BookCreatePayload {
   readonly title: string;
   readonly genre: string;
   readonly platform: string;
-  readonly language: "zh" | "en";
+  readonly language: WorkLanguage;
   readonly targetChapters: number;
   readonly chapterWordCount: number;
   readonly blurb: string;
@@ -107,15 +108,15 @@ export function pickValidValue(current: string, available: ReadonlyArray<string>
   return current && available.includes(current) ? current : available[0] ?? "";
 }
 
-export function defaultChapterWordsForLanguage(language: "zh" | "en"): string {
-  return language === "en" ? "2000" : "3000";
+export function defaultChapterWordsForLanguage(language: WorkLanguage): string {
+  return language === "ko" ? "4000" : language === "en" ? "2000" : "3000";
 }
 
-export function platformOptionsForLanguage(language: "zh" | "en"): ReadonlyArray<PlatformOption> {
-  return language === "en" ? PLATFORMS_EN : PLATFORMS_ZH;
+export function platformOptionsForLanguage(language: WorkLanguage): ReadonlyArray<PlatformOption> {
+  return language === "ko" ? [{ value: "other", label: "Other" }] : language === "en" ? PLATFORMS_EN : PLATFORMS_ZH;
 }
 
-export function defaultBookCreateForm(language: "zh" | "en"): BookCreateFormState {
+export function defaultBookCreateForm(language: WorkLanguage): BookCreateFormState {
   return {
     title: "",
     genre: "",
@@ -142,7 +143,7 @@ export function isBookCreateFormReady(form: BookCreateFormState): boolean {
   );
 }
 
-export function buildBookCreatePayload(form: BookCreateFormState, language: "zh" | "en"): BookCreatePayload {
+export function buildBookCreatePayload(form: BookCreateFormState, language: WorkLanguage): BookCreatePayload {
   const targetChapters = parsePositiveInteger(form.targetChapters);
   const chapterWordCount = parsePositiveInteger(form.chapterWordCount);
   if (!targetChapters || !chapterWordCount || !isBookCreateFormReady(form)) {
@@ -201,8 +202,9 @@ export async function waitForBookReady(bookId: string, options: WaitForBookReady
 export function BookCreate({ nav, theme, t: _t }: { nav: Nav; theme: Theme; t: TFunction }) {
   const c = useColors(theme);
   const { data: project } = useApi<{ language: string }>("/project");
-  const projectLang = project?.language === "en" ? "en" : "zh";
-  const copy = PAGE_COPY[projectLang];
+  const projectLang = normalizeWorkLanguage(project?.language);
+  const previousLanguage = useRef(projectLang);
+  const copy = PAGE_COPY[normalizeStudioLanguage(projectLang)];
   const platformChoices = platformOptionsForLanguage(projectLang);
   const [form, setForm] = useState<BookCreateFormState>(() => defaultBookCreateForm(projectLang));
   const [creating, setCreating] = useState(false);
@@ -210,10 +212,14 @@ export function BookCreate({ nav, theme, t: _t }: { nav: Nav; theme: Theme; t: T
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
+    const previousDefault = defaultChapterWordsForLanguage(previousLanguage.current);
+    previousLanguage.current = projectLang;
     setForm((current) => ({
       ...current,
       platform: pickValidValue(current.platform, platformOptionsForLanguage(projectLang).map((option) => option.value)),
-      chapterWordCount: current.chapterWordCount || defaultChapterWordsForLanguage(projectLang),
+      chapterWordCount: !current.chapterWordCount || current.chapterWordCount === previousDefault
+        ? defaultChapterWordsForLanguage(projectLang)
+        : current.chapterWordCount,
     }));
   }, [projectLang]);
 
