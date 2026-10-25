@@ -166,20 +166,13 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { isSafeBookId } from "./safety.js";
 import { ApiError } from "./errors.js";
 import { buildStudioBookConfig, normalizeStudioPlatform } from "./book-create.js";
+import { normalizeStudioLanguage, normalizeWorkLanguage, resolveStudioAgentLanguage, type StudioLanguage, type WorkLanguage } from "./language.js";
 import {
   deleteStudioTaskSnapshot,
   loadStudioTaskSnapshot,
   saveStudioTaskSnapshot,
   type StudioTaskSnapshot,
 } from "./task-store.js";
-
-// -- Studio server language (read per request from the project config's `language`) --
-
-type StudioLanguage = "zh" | "en";
-
-function normalizeStudioLanguage(value: unknown): StudioLanguage {
-  return value === "en" ? "en" : "zh";
-}
 
 function pick(lang: StudioLanguage, zh: string, en: string): string {
   return lang === "en" ? en : zh;
@@ -1122,7 +1115,7 @@ async function executeConfirmedProductionAction(args: {
   readonly requestedSkills?: ReadonlyArray<string>;
   readonly disabledSkills?: ReadonlyArray<string>;
   readonly playMode?: PlayMode;
-  readonly language?: StudioLanguage;
+  readonly language?: WorkLanguage;
   readonly taskId: string;
   readonly sourceRequestId?: string;
   readonly signal: AbortSignal;
@@ -1132,7 +1125,8 @@ async function executeConfirmedProductionAction(args: {
   readonly actionResult: ActionResult;
   readonly binding: ConfirmedCapabilityBinding;
 }> {
-  const lang = args.language ?? "zh";
+  const workLanguage = args.language ?? "zh";
+  const lang = normalizeStudioLanguage(workLanguage);
   const id = args.taskId;
   const actionPayload = args.actionPayload;
   const configuredSkills = await loadAvailableAgentSkills({ projectRoot: args.root });
@@ -1176,7 +1170,7 @@ async function executeConfirmedProductionAction(args: {
     const payload = actionPayload?.createBook;
     const title = requirePayloadText(payload?.title, pick(lang, "确认建书缺少书名，请重新生成确认卡。", "The book creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createBookFoundationTool(args.pipeline, {
-      language: lang,
+      language: workLanguage,
       actionPayload,
       workerSkills: (worker) => worker === "architect" ? profileSkills("longform-novel") : [],
     });
@@ -1195,7 +1189,7 @@ async function executeConfirmedProductionAction(args: {
     if (!direction) throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认短篇缺少方向，请重新生成确认卡。", "The short fiction confirmation is missing a direction. Regenerate the confirmation card."));
     tool = createShortFictionRunTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: workLanguage,
       defaultSkills: profileSkills("short-fiction"),
     });
     params = {
@@ -1212,7 +1206,7 @@ async function executeConfirmedProductionAction(args: {
     }
     const chapterCount = actionPayload?.writeNext?.chapterCount ?? 1;
     tool = createWriteChaptersTool(args.pipeline, args.bookId, {
-      language: lang,
+      language: workLanguage,
       workerSkills: (worker) => (
         worker === "auditor" || worker === "reviser"
           ? profileSkills("longform-novel", true)
@@ -1240,7 +1234,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建剧本缺少标题，请重新生成确认卡。", "The script creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createScriptCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: workLanguage,
       defaultSkills: profileSkills("script"),
     });
     params = {
@@ -1260,7 +1254,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建分镜缺少标题，请重新生成确认卡。", "The storyboard creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createStoryboardCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: workLanguage,
       defaultSkills: profileSkills("storyboard"),
     });
     params = {
@@ -1281,7 +1275,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建互动影游缺少标题，请重新生成确认卡。", "The interactive film confirmation is missing a title. Regenerate the confirmation card."));
     tool = createInteractiveFilmCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: workLanguage,
       defaultSkills: profileSkills("interactive-film"),
     });
     params = {
@@ -1333,7 +1327,7 @@ async function executeConfirmedProductionAction(args: {
       mode: payload.mode ?? "canon",
       ...(payload.genre ? { genre: payload.genre } : {}),
       ...(payload.platform ? { platform: payload.platform } : {}),
-      language: payload.language ?? lang,
+      language: payload.language ?? workLanguage,
       ...(payload.targetChapters ? { targetChapters: payload.targetChapters } : {}),
       ...(payload.chapterWordCount ? { chapterWordCount: payload.chapterWordCount } : {}),
     };
@@ -1360,7 +1354,7 @@ async function executeConfirmedProductionAction(args: {
       ...(payload?.resumeFrom ? { resumeFrom: payload.resumeFrom } : {}),
       ...(payload?.genre ? { genre: payload.genre } : {}),
       ...(payload?.platform ? { platform: payload.platform } : {}),
-      language: payload?.language ?? lang,
+      language: payload?.language ?? workLanguage,
       ...(payload?.targetChapters ? { targetChapters: payload.targetChapters } : {}),
       ...(payload?.chapterWordCount ? { chapterWordCount: payload.chapterWordCount } : {}),
     };
@@ -1407,7 +1401,7 @@ async function executeConfirmedProductionAction(args: {
       ...(payload.sourceName ? { sourceName: payload.sourceName } : {}),
       ...(payload.genre ? { genre: payload.genre } : {}),
       ...(payload.platform ? { platform: payload.platform } : {}),
-      language: payload.language ?? lang,
+      language: payload.language ?? workLanguage,
       ...(payload.targetChapters ? { targetChapters: payload.targetChapters } : {}),
       ...(payload.chapterWordCount ? { chapterWordCount: payload.chapterWordCount } : {}),
     };
@@ -1428,7 +1422,7 @@ async function executeConfirmedProductionAction(args: {
       : undefined;
     tool = createPlayStartTool(args.pipeline, args.root, args.sessionId, args.playMode, {
       actionPayload: confirmedActionPayload,
-      language: lang,
+      language: workLanguage,
       defaultSkills: profileSkills("interactive-world"),
     });
     params = {
@@ -1448,7 +1442,7 @@ async function executeConfirmedProductionAction(args: {
     const deps = filmLLMDepsFromClient(agentCtx.client, agentCtx.model, {
       activatedSkills: () => profileSkills("interactive-film"),
     });
-    tool = createDraftStructureTool(args.root, projectId, deps, lang);
+    tool = createDraftStructureTool(args.root, projectId, deps, workLanguage);
     params = {
       instruction: payload?.instruction?.trim() || args.instruction,
     };
@@ -2931,7 +2925,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       createBook: {
         title: body.title,
         ...(body.genre ? { genre: body.genre } : {}),
-        ...(body.language === "en" || body.language === "zh" ? { language: body.language } : {}),
+        ...(body.language ? { language: bookConfig.language } : {}),
         ...(body.platform ? { platform: normalizeStudioPlatform(body.platform) } : {}),
         ...(body.chapterWordCount ? { chapterWordCount: body.chapterWordCount } : {}),
         ...(body.targetChapters ? { targetChapters: body.targetChapters } : {}),
@@ -2939,7 +2933,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
     };
     const tool = createBookFoundationTool(pipeline, {
       actionPayload,
-      language: body.language === "en" ? "en" : "zh",
+      language: bookConfig.language,
       workerSkills: () => foundationSkills,
     });
     const binding = confirmedCapabilityBinding("create_book")!;
@@ -2952,7 +2946,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         title: body.title,
         ...(body.genre ? { genre: body.genre } : {}),
         ...(body.platform ? { platform: normalizeStudioPlatform(body.platform) } : {}),
-        ...(body.language === "en" || body.language === "zh" ? { language: body.language } : {}),
+        ...(body.language ? { language: bookConfig.language } : {}),
         ...(body.targetChapters ? { targetChapters: body.targetChapters } : {}),
         ...(body.chapterWordCount ? { chapterWordCount: body.chapterWordCount } : {}),
       },
@@ -3088,7 +3082,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         state.loadBookConfig(id),
         buildPipelineConfig({ bookIdForSettings: id }),
       ]);
-      const language = book.language === "en" ? "en" : "zh";
+      const language = book.language;
       const requestedBrief = typeof body.brief === "string" ? body.brief.trim() : "";
       const inspirationSkills = await hydrateActivatedSkillGuidance(
         await resolveStudioProfileSkills(root, "longform-novel", { includeRecommended: true }),
@@ -3102,18 +3096,20 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             role: "system",
             content: language === "en"
               ? "Generate one optional Markdown inspiration card for revising the supplied chapter with the activated Skills. This is read-only advice: do not rewrite the chapter, alter canon, or claim persistence."
+              : language === "ko"
+              ? "활성화된 Skills를 따라 이 장을 수정하기 위한 선택적 Markdown 영감 카드 한 장을 한국어로 작성하세요. 읽기 전용 조언이며 장 전체를 다시 쓰거나 정사를 변경하거나 저장했다고 주장하지 마세요."
               : "按已激活的 Skills，为所给章节生成一张可选的 Markdown 修订灵感卡。这是只读建议：不要代写整章、改变正典或声称已经落盘。",
           },
           {
             role: "user",
             content: [
-              language === "en" ? `Book: ${book.title}` : `书名：${book.title}`,
-              language === "en" ? `Chapter: ${num}` : `章节：第${num}章`,
+              language === "en" ? `Book: ${book.title}` : language === "ko" ? `책: ${book.title}` : `书名：${book.title}`,
+              language === "en" ? `Chapter: ${num}` : language === "ko" ? `장: 제${num}장` : `章节：第${num}章`,
               requestedBrief || persistedBrief
-                ? `${language === "en" ? "Current user brief" : "当前用户提示"}:\n${requestedBrief || persistedBrief}`
+                ? `${language === "en" ? "Current user brief" : language === "ko" ? "현재 사용자 지시" : "当前用户提示"}:\n${requestedBrief || persistedBrief}`
                 : "",
-              plan ? `${language === "en" ? "Generated chapter plan" : "系统章节计划"}:\n${plan}` : "",
-              `${language === "en" ? "Current chapter" : "当前章节"}:\n${chapter}`,
+              plan ? `${language === "en" ? "Generated chapter plan" : language === "ko" ? "생성된 장 계획" : "系统章节计划"}:\n${plan}` : "",
+              `${language === "en" ? "Current chapter" : language === "ko" ? "현재 장" : "当前章节"}:\n${chapter}`,
             ].filter(Boolean).join("\n\n"),
           },
         ], inspirationSkills),
@@ -4801,12 +4797,13 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           else throw new ApiError(404, "BOOK_NOT_FOUND", `Book not found: ${agentBookId}`);
         }
       }
-      const configLanguage = config.language === "en" ? "en" : "zh";
-      const bookLanguage = activeBookConfig?.language === "en" ? "en" : activeBookConfig?.language === "zh" ? "zh" : undefined;
       const requestedLanguage = actionPayload?.shortRun?.language ?? actionPayload?.createBook?.language;
-      const surfaceLanguage = agentBookId
-        ? (bookLanguage ?? configLanguage)
-        : (requestedLanguage ?? configLanguage);
+      const agentLanguage = resolveStudioAgentLanguage(
+        config.language,
+        activeBookConfig?.language,
+        agentBookId ? undefined : requestedLanguage,
+      );
+      const surfaceLanguage = normalizeStudioLanguage(agentLanguage);
       const streamSessionId = loadedBookSession.sessionId;
       const titleBeforeRun = bookSession.title;
       let sessionTitleBroadcasted = false;
@@ -5021,7 +5018,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             actionPayload,
             requestedSkills,
             disabledSkills,
-            language: surfaceLanguage,
+            language: agentLanguage,
             taskId,
             sourceRequestId,
             signal: taskController.signal,
@@ -5086,7 +5083,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             disabledSkills,
             attachments: [],
             sessionId: bookSession.sessionId,
-            language: surfaceLanguage,
+            language: agentLanguage,
             resumeAction: {
               toolCallId: exec.id,
               capabilityId: confirmedOutcome.binding.capabilityId,
@@ -5262,7 +5259,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           disabledSkills,
           attachments,
           sessionId: bookSession.sessionId,
-          language: surfaceLanguage,
+          language: agentLanguage,
           onContextCompression: (event) => {
             broadcast("context:compression", {
               sessionId: streamSessionId,
@@ -5915,7 +5912,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
   // --- Style Analyze ---
 
   app.post("/api/v1/style/analyze", async (c) => {
-    const { text, sourceName, language } = await c.req.json<{ text: string; sourceName: string; language?: "zh" | "en" }>();
+    const { text, sourceName, language } = await c.req.json<{ text: string; sourceName: string; language?: WorkLanguage }>();
     if (!text?.trim()) return c.json({ error: "text is required" }, 400);
 
     try {
@@ -5927,7 +5924,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         projectRoot: root,
         referenceText: text,
         sourceName: sourceName ?? "unknown",
-        language: language ?? (config.language === "en" ? "en" : "zh"),
+        language: normalizeWorkLanguage(language, config.language),
       });
       return c.json({ guide });
     } catch (e) {

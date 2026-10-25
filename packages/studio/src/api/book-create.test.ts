@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { defaultChapterLength } from "@actalk/inkos-core";
 import { buildStudioBookConfig, normalizeStudioPlatform, waitForStudioBookReady } from "./book-create";
 
 describe("normalizeStudioPlatform", () => {
@@ -13,6 +14,12 @@ describe("normalizeStudioPlatform", () => {
 });
 
 describe("buildStudioBookConfig", () => {
+  it.each(["zh", "en", "ko"] as const)("preserves %s creation language and its default length", (language) => {
+    const config = buildStudioBookConfig({ title: "Language Fixture", genre: "other", language }, "2026-10-24T00:00:00.000Z");
+    expect(config.language).toBe(language);
+    expect(config.chapterWordCount).toBe(defaultChapterLength(language));
+  });
+
   it("preserves supported platform selections from studio create requests", () => {
     const config = buildStudioBookConfig(
       {
