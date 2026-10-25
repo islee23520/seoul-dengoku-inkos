@@ -16,7 +16,7 @@ import {
   type ShortFictionReference,
   type ShortFictionLanguage,
 } from "@actalk/inkos-core";
-import { LanguageSchema } from "@actalk/inkos-core";
+import { LanguageSchema } from "../writing-language.js";
 import { buildPipelineConfig, findProjectRoot, loadConfig, log, logError, resolveCliProfileSkills } from "../utils.js";
 
 export { extractResponsesImageBase64, resolveCoverApiKey } from "@actalk/inkos-core";
@@ -115,6 +115,9 @@ shortCommand
         tool: createShortFictionRunTool(pipeline, root, { language, defaultSkills: activatedSkills }),
         parameters: {
           direction: opts.direction,
+          minChapterLength: null,
+          maxChapterLength: null,
+          openingHookChars: null,
           reference: reference?.text,
           storyId: opts.storyId,
           chapters: chapterCount,
@@ -161,6 +164,7 @@ shortCommand
       }
     } catch (e) {
       logCommandError("Short run failed", e, opts.json);
+      process.exitCode = 1;
     }
   });
 
