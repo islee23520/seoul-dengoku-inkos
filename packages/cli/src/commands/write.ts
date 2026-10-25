@@ -59,6 +59,7 @@ writeCommand
 
       const count = parseInt(opts.count, 10);
       const wordCount = opts.words ? parseInt(opts.words, 10) : undefined;
+      const startChapterNumber = await state.getNextChapterNumber(bookId);
 
       if (!opts.json) log(formatWriteNextProgress(language, 1, count, bookId));
       const action = await executeExplicitCapabilityTool({
@@ -69,6 +70,7 @@ writeCommand
         parameters: {
           instruction: context || "Write the requested consecutive chapters for the active Work.",
           bookId,
+          startChapterNumber,
           chapterCount: count,
           ...(wordCount ? { chapterWordCount: wordCount } : {}),
         },
@@ -235,6 +237,7 @@ writeCommand
         parameters: {
           instruction: opts.brief?.trim() || `Rewrite chapter ${chapter}.`,
           bookId,
+          startChapterNumber: nextChapter,
           chapterCount: 1,
           ...(wordCount ? { chapterWordCount: wordCount } : {}),
         },
