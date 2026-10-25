@@ -3,6 +3,7 @@ import type {
   CurrentStateState,
   HooksState,
 } from "../models/runtime-state.js";
+import { koreanChapterType } from "../utils/chapter-type.js";
 import type { Language } from "../models/language.js";
 
 export function renderHooksProjection(
@@ -71,7 +72,7 @@ export function renderChapterSummariesProjection(
         summary.stateChanges,
         summary.hookActivity,
         summary.mood,
-        summary.chapterType,
+        language === "ko" ? koreanChapterType(summary.chapterType) : summary.chapterType,
       ].map(escapeTableCell).join(" | ")
     } |`);
 

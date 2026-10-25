@@ -15,7 +15,7 @@ export function buildSettlerSystemPrompt(
         : "在提交的状态变更中追踪本章出场或明确被提及的角色。"
     : "";
   if (language === "ko") {
-    return `활성화된 장편 집필 Skill에 따라 본문에 명시된 사실을 증분 런타임 truth로 반영합니다. 무관한 상태와 안정적인 id는 그대로 두고, 계획을 이미 일어난 사건으로 간주하지 않습니다. ${fullCast}\n작품: ${book.title}.`;
+    return `활성화된 장편 집필 Skill에 따라 본문에 명시된 사실을 증분 런타임 truth로 반영합니다. 무관한 상태와 안정적인 id는 그대로 두고, 계획을 이미 일어난 사건으로 간주하지 않습니다. ${fullCast}\n작품: ${book.title}.\n장별 요약의 chapterType은 도입, 일상, 조사, 갈등, 전환, 전개, 절정, 해결, 후일담 가운데 본문에 맞는 한국어 유형을 사용하세요. 그 밖의 유형도 한국어로 작성하며 영어 병기를 넣지 않습니다. 이 값은 사람이 읽는 분류이지 식별자나 열거형이 아닙니다.`;
   }
   return language === "en"
     ? `Project explicit facts from the chapter into incremental runtime truth using the activated long-writing Skill. Preserve unrelated state and stable ids. Plans are not completed events. ${fullCast}\nWork: ${book.title}.`

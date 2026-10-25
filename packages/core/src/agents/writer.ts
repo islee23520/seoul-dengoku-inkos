@@ -1,3 +1,4 @@
+import { koreanChapterType } from "../utils/chapter-type.js";
 import { BaseAgent } from "./base.js";
 import {renderChapterDocument} from '../utils/chapter-document.js';
 import type { BookConfig } from "../models/book.js";
@@ -351,7 +352,7 @@ export class WriterAgent extends BaseAgent {
         stateChanges: result.chapterSummary.stateChanges,
         hookActivity: result.chapterSummary.hookActivity,
         mood: result.chapterSummary.mood,
-        chapterType: result.chapterSummary.chapterType,
+        chapterType: resolvedLang === "ko" ? koreanChapterType(result.chapterSummary.chapterType) : result.chapterSummary.chapterType,
       },
     });
 
