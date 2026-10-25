@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { fetchJson, invalidateApiPaths, useApi, postApi } from "../hooks/use-api";
 import type { Theme } from "../hooks/use-theme";
 import type { TFunction } from "../hooks/use-i18n";
-import { useI18n } from "../hooks/use-i18n";
 import { useColors } from "../hooks/use-colors";
 import { tr } from "../lib/app-language";
 import { FileInput, BookCopy, Feather, BookMarked, Upload, Wand2 } from "lucide-react";
 import { waitForStudioBookReady } from "../lib/book-ready";
+import { normalizeWorkLanguage } from "../api/language";
 
 interface BookSummary {
   readonly id: string;
@@ -28,7 +28,8 @@ function fileToDataUrl(file: File): Promise<string> {
 
 export function ImportManager({ nav, theme, t, initialTab }: { nav: Nav; theme: Theme; t: TFunction; initialTab?: Tab }) {
   const c = useColors(theme);
-  const { lang } = useI18n();
+  const { data: project } = useApi<{ language: string }>("/project");
+  const projectLanguage = normalizeWorkLanguage(project?.language);
   const { data: booksData } = useApi<{ books: ReadonlyArray<BookSummary> }>("/books");
   const [tab, setTab] = useState<Tab>(initialTab ?? "chapters");
   const [status, setStatus] = useState<{ readonly tone: "info" | "success" | "error"; readonly message: string } | null>(null);
@@ -50,7 +51,8 @@ export function ImportManager({ nav, theme, t, initialTab }: { nav: Nav; theme: 
   const [ffText, setFfText] = useState("");
   const [ffMode, setFfMode] = useState("canon");
   const [ffGenre, setFfGenre] = useState("other");
-  const [ffLang, setFfLang] = useState(lang);
+  const [ffLanguageOverride, setFfLang] = useState("");
+  const ffLang = normalizeWorkLanguage(ffLanguageOverride, projectLanguage);
 
   // Spinoff (番外) state
   const [spTitle, setSpTitle] = useState("");
@@ -62,7 +64,8 @@ export function ImportManager({ nav, theme, t, initialTab }: { nav: Nav; theme: 
   const [imRef, setImRef] = useState("");
   const [imIdea, setImIdea] = useState("");
   const [imGenre, setImGenre] = useState("other");
-  const [imLang, setImLang] = useState(lang);
+  const [imLanguageOverride, setImLang] = useState("");
+  const imLang = normalizeWorkLanguage(imLanguageOverride, projectLanguage);
 
   useEffect(() => {
     if (initialTab) {
@@ -308,10 +311,11 @@ export function ImportManager({ nav, theme, t, initialTab }: { nav: Nav; theme: 
                 <option value="urban">{tr("都市", "Urban")}</option>
                 <option value="xianxia">{tr("仙侠", "Xianxia")}</option>
               </select>
-              <select value={ffLang} onChange={(e) => setFfLang(e.target.value as "zh" | "en")}
+              <select value={ffLang} onChange={(e) => setFfLang(e.target.value)}
                 className="px-3 py-2 rounded-lg bg-secondary/30 border border-border text-sm">
                 <option value="zh">{tr("中文", "Chinese")}</option>
                 <option value="en">English</option>
+                <option value="ko">한국어</option>
               </select>
             </div>
             <textarea value={ffText} onChange={(e) => setFfText(e.target.value)} rows={10}
@@ -363,10 +367,11 @@ export function ImportManager({ nav, theme, t, initialTab }: { nav: Nav; theme: 
                 <option value="urban">{tr("都市", "Urban")}</option>
                 <option value="xianxia">{tr("仙侠", "Xianxia")}</option>
               </select>
-              <select value={imLang} onChange={(e) => setImLang(e.target.value as "zh" | "en")}
+              <select value={imLang} onChange={(e) => setImLang(e.target.value)}
                 className="px-3 py-2 rounded-lg bg-secondary/30 border border-border text-sm">
                 <option value="zh">{tr("中文", "Chinese")}</option>
                 <option value="en">English</option>
+                <option value="ko">한국어</option>
               </select>
             </div>
             <textarea value={imIdea} onChange={(e) => setImIdea(e.target.value)} rows={4}
