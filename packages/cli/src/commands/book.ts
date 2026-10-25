@@ -103,6 +103,7 @@ bookCommand
           workerSkills: () => activatedSkills,
         }),
         parameters: {
+          bookId,
           instruction: brief?.trim() || `Create ${book.title}`,
           title: book.title,
           genre: book.genre,

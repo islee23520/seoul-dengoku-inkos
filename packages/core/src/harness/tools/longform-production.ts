@@ -119,11 +119,9 @@ export function createBookFoundationTool(
         const payload = options.actionPayload?.createBook;
         const title = options.activeWork?.work.title || payload?.title?.trim() || params.title?.trim();
         if (!title) throw new Error("create_book requires title.");
-        const id = options.activeWork ? resolveBookId("create_book",params.bookId,options.activeWork.work.id) : payload?.title
-          ? deriveBookIdFromTitle(payload.title) || `book-${Date.now().toString(36)}`
-          : params.bookId
-            ? assertSafeBookId(params.bookId, "create_book.bookId")
-            : deriveBookIdFromTitle(title) || `book-${Date.now().toString(36)}`;
+        const id = options.activeWork ? resolveBookId("create_book",params.bookId,options.activeWork.work.id) : params.bookId
+          ? assertSafeBookId(params.bookId, "create_book.bookId")
+          : deriveBookIdFromTitle(title) || `book-${Date.now().toString(36)}`;
         let existing:BookConfig|undefined;
         if(options.activeWork){
           const state=new StateManager(options.activeWork.projectRoot);
