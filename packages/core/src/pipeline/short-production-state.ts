@@ -37,7 +37,7 @@ export const ShortProductionStateSchema = z.object({
       unit:z.enum(["non-whitespace-characters","words"]),openingHookLength:z.number().int().nonnegative(),
       chapterLengths:z.array(z.object({number:z.number().int().positive(),length:z.number().int().nonnegative()})),
     }).optional(),
-    target:z.record(z.unknown()).optional(),
+    target:z.record(z.string(),z.unknown()).optional(),
   }).strict().optional(),
   stages: z.object({
     review: ShortStageSchema.optional(),

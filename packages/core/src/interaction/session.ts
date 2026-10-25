@@ -18,7 +18,7 @@ export const PendingProposedActionSchema = z.object({
   summary: z.string().min(1).optional(),
   playMode: PlayModeSchema.optional(),
   requestedSkills: z.array(z.string().min(1)).optional(),
-  actionPayload: z.record(z.unknown()).optional(),
+  actionPayload: z.record(z.string(), z.unknown()).optional(),
 }).strict();
 
 export type PendingProposedAction = z.infer<typeof PendingProposedActionSchema>;
@@ -42,7 +42,7 @@ export const ToolExecutionSchema = z.object({
   agent: z.string().optional(),
   label: z.string(),
   status: z.enum(["running", "processing", "completed", "error"]),
-  args: z.record(z.unknown()).optional(),
+  args: z.record(z.string(), z.unknown()).optional(),
   result: z.string().optional(),
   details: z.unknown().optional(),
   error: z.string().optional(),
